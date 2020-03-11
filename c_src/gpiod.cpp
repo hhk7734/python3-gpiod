@@ -9,6 +9,11 @@ PYBIND11_MODULE(_gpiod, m) {
     chip.def(py::init<>())
         .def(py::init<const std::string &>())
         .def(py::init<const std::string &, int>())
+        .def("open",
+             &gpiod::chip::open,
+             py::arg("device"),
+             py::arg("how") = int(gpiod::chip::OPEN_LOOKUP))
+        .def("reset", &gpiod::chip::reset)
         .def("name", &gpiod::chip::name)
         .def("label", &gpiod::chip::label)
         .def("num_lines", &gpiod::chip::num_lines)
@@ -20,6 +25,7 @@ PYBIND11_MODULE(_gpiod, m) {
     chip.attr("OPEN_BY_NAME")   = int(gpiod::chip::OPEN_BY_NAME);
     chip.attr("OPEN_BY_LABEL")  = int(gpiod::chip::OPEN_BY_LABEL);
     chip.attr("OPEN_BY_NUMBER") = int(gpiod::chip::OPEN_BY_NUMBER);
+
 
     py::class_<gpiod::line_request> line_request(m, "line_request");
 
@@ -40,6 +46,7 @@ PYBIND11_MODULE(_gpiod, m) {
         .def_readwrite("consumer", &gpiod::line_request::consumer)
         .def_readwrite("request_type", &gpiod::line_request::request_type)
         .def_readwrite("flags", &gpiod::line_request::flags);
+
 
     py::class_<gpiod::line> line(m, "line");
 
@@ -88,7 +95,9 @@ PYBIND11_MODULE(_gpiod, m) {
     // line.attr("BIAS_PULL_UP")   = int(gpiod::line::BIAS_PULL_UP);
     // line.attr("BIAS_PULL_DOWN") = int(gpiod::line::BIAS_PULL_DOWN);
 
+
     m.def("find_line", &gpiod::find_line, py::arg("name"));
+
 
     py::class_<gpiod::line_event> line_event(m, "line_event");
 

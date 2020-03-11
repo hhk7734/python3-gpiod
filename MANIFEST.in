@@ -1,0 +1,4 @@
+include README.md
+include CHANGELOG
+include c_src/*
+include test/*

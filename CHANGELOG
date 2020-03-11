@@ -1,0 +1,5 @@
+python3-gpiod (0.1.0) UNRELEASED; urgency=medium
+
+  * Add initial setup files
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Tue, 10 Mar 2020 15:40:13 +0900

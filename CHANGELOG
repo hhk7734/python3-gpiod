@@ -1,3 +1,9 @@
+python3-gpiod (0.4.1) unstable; urgency=medium
+
+  * Fix issue where pip does not install dependencies
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 12 Mar 2020 19:11:24 +0900
+
 python3-gpiod (0.4.0) unstable; urgency=medium
 
   * Add libgpiodcxx version check

@@ -8,12 +8,12 @@
 
 ```shell
 sudo apt update \
-&& sudo apt install -y python3 python3-dev python3-pip gpiod libgpiod-dev \
-&& python3 -m pip install -U --user pip setuptools
+&& sudo apt install -y python3 python3-dev python3-pip \
+    gpiod libgpiod-dev pkg-config
 ```
 
 ```shell
-python3 -m pip install -U --user gpiod
+python3 -m pip install -U --user pip gpiod
 ```
 
 ## Blink example

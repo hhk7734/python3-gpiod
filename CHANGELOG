@@ -1,3 +1,11 @@
+python3-gpiod (0.4.0) unstable; urgency=medium
+
+  * Add libgpiodcxx version check
+  * Remove -std=c++11 option
+  * Add line_bulk, chip_iter, line_iter classes
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 12 Mar 2020 14:18:16 +0900
+
 python3-gpiod (0.3.0) unstable; urgency=medium
 
   * Add open, reset function

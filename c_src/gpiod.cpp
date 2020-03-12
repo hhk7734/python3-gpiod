@@ -25,6 +25,8 @@
 #include <gpiod.hpp>
 #include <pybind11/pybind11.h>
 
+#define LIBGPIODCXX_VERSION(a, b) (((a) << 8) + (b))
+
 namespace py = pybind11;
 
 PYBIND11_MODULE(_gpiod, m) {
@@ -80,7 +82,9 @@ PYBIND11_MODULE(_gpiod, m) {
         .def("consumer", &gpiod::line::consumer)
         .def("direction", &gpiod::line::direction)
         .def("active_state", &gpiod::line::active_state)
-        // .def("bias", &gpiod::line::bias)
+#if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
+        .def("bias", &gpiod::line::bias)
+#endif
         .def("is_used", &gpiod::line::is_used)
         .def("is_open_drain", &gpiod::line::is_open_drain)
         .def("is_open_source", &gpiod::line::is_open_source)
@@ -92,32 +96,40 @@ PYBIND11_MODULE(_gpiod, m) {
         .def("is_requested", &gpiod::line::is_requested)
         .def("get_value", &gpiod::line::get_value)
         .def("set_value", &gpiod::line::set_value, py::arg("value"))
-        // .def("set_config",
-        //      &gpiod::line::set_config,
-        //      py::arg("direction"),
-        //      py::arg("flags"),
-        //      py::arg("value") = 0)
-        // .def("set_flags", &gpiod::line::set_flags, py::arg("flags"))
-        // .def("set_direction_input", &gpiod::line::set_direction_input)
-        // .def("set_direction_output",
-        //      &gpiod::line::set_direction_output,
-        //      py::arg("value") = 0)
+#if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
+        .def("set_config",
+             &gpiod::line::set_config,
+             py::arg("direction"),
+             py::arg("flags"),
+             py::arg("value") = 0)
+        .def("set_flags", &gpiod::line::set_flags, py::arg("flags"))
+        .def("set_direction_input", &gpiod::line::set_direction_input)
+        .def("set_direction_output",
+             &gpiod::line::set_direction_output,
+             py::arg("value") = 0)
+#endif
         .def("event_wait", &gpiod::line::event_wait, py::arg("timeout"))
         .def("event_read", &gpiod::line::event_read)
-        // .def("event_read_multiple", &gpiod::line::event_read_multiple)
+#if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
+        .def("event_read_multiple", &gpiod::line::event_read_multiple)
+#endif
         .def("event_get_fd", &gpiod::line::event_get_fd)
         .def("get_chip", &gpiod::line::get_chip)
-        // .def("update", &gpiod::line::update)
+#if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
+        .def("update", &gpiod::line::update)
+#endif
         .def("reset", &gpiod::line::reset);
 
     line.attr("DIRECTION_INPUT")  = int(gpiod::line::DIRECTION_INPUT);
     line.attr("DIRECTION_OUTPUT") = int(gpiod::line::DIRECTION_OUTPUT);
     line.attr("ACTIVE_LOW")       = int(gpiod::line::ACTIVE_LOW);
     line.attr("ACTIVE_HIGH")      = int(gpiod::line::ACTIVE_HIGH);
-    // line.attr("BIAS_AS_IS")     = int(gpiod::line::BIAS_AS_IS);
-    // line.attr("BIAS_DISABLE")   = int(gpiod::line::BIAS_DISABLE);
-    // line.attr("BIAS_PULL_UP")   = int(gpiod::line::BIAS_PULL_UP);
-    // line.attr("BIAS_PULL_DOWN") = int(gpiod::line::BIAS_PULL_DOWN);
+#if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
+    line.attr("BIAS_AS_IS")     = int(gpiod::line::BIAS_AS_IS);
+    line.attr("BIAS_DISABLE")   = int(gpiod::line::BIAS_DISABLE);
+    line.attr("BIAS_PULL_UP")   = int(gpiod::line::BIAS_PULL_UP);
+    line.attr("BIAS_PULL_DOWN") = int(gpiod::line::BIAS_PULL_DOWN);
+#endif
 
 
     m.def("find_line", &gpiod::find_line, py::arg("name"));

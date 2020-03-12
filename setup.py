@@ -27,9 +27,18 @@ from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
 from os import path
+import pkgconfig
 
 BASE_DIR = path.dirname(path.abspath(__file__))
 CHANGELOG_PATH = path.join(BASE_DIR, "CHANGELOG")
+
+if pkgconfig.exists('libgpiodcxx') is not True:
+    raise EnvironmentError("pkg-config: Failed to find libgpiodcxx.")
+
+_libgpiodcxx_version = pkgconfig.modversion('libgpiodcxx')
+
+LIBGPIODCXX_VERSION_CODE = (
+    int(_libgpiodcxx_version[0]) << 8) + int(_libgpiodcxx_version[2])
 
 
 class get_pybind_include(object):
@@ -97,7 +106,8 @@ class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     c_opts = {
         'msvc': ['/EHsc'],
-        'unix': ["-lgpiodcxx"],
+        'unix': ["-lgpiodcxx",
+                 f"-DLIBGPIODCXX_VERSION_CODE={LIBGPIODCXX_VERSION_CODE}"],
     }
     l_opts = {
         'msvc': [],
@@ -131,8 +141,5 @@ class BuildExt(build_ext):
 setup(
     version=version,
     ext_modules=ext_modules,
-    install_requires=['pybind11>=2.4'],
-    setup_requires=['pybind11>=2.4'],
     cmdclass={'build_ext': BuildExt},
-    zip_safe=False,
 )

@@ -27,18 +27,22 @@ from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
 from os import path
-import pkgconfig
 
 BASE_DIR = path.dirname(path.abspath(__file__))
 CHANGELOG_PATH = path.join(BASE_DIR, "CHANGELOG")
 
-if pkgconfig.exists('libgpiodcxx') is not True:
-    raise EnvironmentError("pkg-config: Failed to find libgpiodcxx.")
+LIBGPIODCXX_VERSION_CODE = 0
 
-_libgpiodcxx_version = pkgconfig.modversion('libgpiodcxx')
+if(sys.argv[1] != 'egg_info'):
+    import pkgconfig
 
-LIBGPIODCXX_VERSION_CODE = (
-    int(_libgpiodcxx_version[0]) << 8) + int(_libgpiodcxx_version[2])
+    if pkgconfig.exists('libgpiodcxx') is not True:
+        raise EnvironmentError("pkg-config: Failed to find libgpiodcxx.")
+
+    _libgpiodcxx_version = pkgconfig.modversion('libgpiodcxx')
+
+    LIBGPIODCXX_VERSION_CODE = (
+        int(_libgpiodcxx_version[0]) << 8) + int(_libgpiodcxx_version[2])
 
 
 class get_pybind_include(object):

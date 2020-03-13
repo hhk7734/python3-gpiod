@@ -23,6 +23,7 @@
  */
 
 #include <gpiod.hpp>
+#include <pybind11/chrono.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -109,7 +110,7 @@ PYBIND11_MODULE(_gpiod, m) {
              &gpiod::line::set_direction_output,
              py::arg("value") = 0)
 #endif
-        .def("event_wait", &gpiod::line::event_wait, py::arg("timeout_ns"))
+        .def("event_wait", &gpiod::line::event_wait, py::arg("timeout"))
         .def("event_read", &gpiod::line::event_read)
 #if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
         .def("event_read_multiple", &gpiod::line::event_read_multiple)
@@ -163,8 +164,7 @@ PYBIND11_MODULE(_gpiod, m) {
         .def("release", &gpiod::line_bulk::release)
         .def("get_values", &gpiod::line_bulk::get_values)
         .def("set_values", &gpiod::line_bulk::set_values, py::arg("values"))
-        .def(
-            "event_wait", &gpiod::line_bulk::event_wait, py::arg("timeout_ns"));
+        .def("event_wait", &gpiod::line_bulk::event_wait, py::arg("timeout"));
 
     py::class_<gpiod::line_bulk::iterator> iterator(line_bulk, "iterator");
 
@@ -189,8 +189,8 @@ PYBIND11_MODULE(_gpiod, m) {
 
 
     m.def("begin",
-           py::overload_cast<gpiod::line_iter>(&gpiod::begin),
-           py::arg("iter"))
+          py::overload_cast<gpiod::line_iter>(&gpiod::begin),
+          py::arg("iter"))
         .def("end",
              py::overload_cast<const gpiod::line_iter &>(&gpiod::end),
              py::arg("iter"));

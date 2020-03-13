@@ -24,6 +24,7 @@
 
 #include <gpiod.hpp>
 #include <pybind11/chrono.h>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -49,7 +50,10 @@ PYBIND11_MODULE(_gpiod, m) {
         .def("find_line", &gpiod::chip::find_line, py::arg("name"))
         .def("get_lines", &gpiod::chip::get_lines, py::arg("offsets"))
         .def("get_all_lines", &gpiod::chip::get_all_lines)
-        .def("find_lines", &gpiod::chip::find_lines, py::arg("names"));
+        .def("find_lines", &gpiod::chip::find_lines, py::arg("names"))
+        .def(py::self == py::self)
+        .def(py::self != py::self)
+        .def(! py::self);
 
     chip.attr("OPEN_LOOKUP")    = int(gpiod::chip::OPEN_LOOKUP);
     chip.attr("OPEN_BY_PATH")   = int(gpiod::chip::OPEN_BY_PATH);
@@ -123,7 +127,10 @@ PYBIND11_MODULE(_gpiod, m) {
 #if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
         .def("update", &gpiod::line::update)
 #endif
-        .def("reset", &gpiod::line::reset);
+        .def("reset", &gpiod::line::reset)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
+        .def(! py::self);
 
     line.attr("DIRECTION_INPUT")  = int(gpiod::line::DIRECTION_INPUT);
     line.attr("DIRECTION_OUTPUT") = int(gpiod::line::DIRECTION_OUTPUT);
@@ -167,11 +174,14 @@ PYBIND11_MODULE(_gpiod, m) {
         .def("release", &gpiod::line_bulk::release)
         .def("get_values", &gpiod::line_bulk::get_values)
         .def("set_values", &gpiod::line_bulk::set_values, py::arg("values"))
-        .def("event_wait", &gpiod::line_bulk::event_wait, py::arg("timeout"));
+        .def("event_wait", &gpiod::line_bulk::event_wait, py::arg("timeout"))
+        .def(! py::self);
 
     py::class_<gpiod::line_bulk::iterator> iterator(line_bulk, "iterator");
 
-    iterator.def(py::init<>());
+    iterator.def(py::init<>())
+        .def(py::self == py::self)
+        .def(py::self != py::self);
 
     line_bulk.def("begin", &gpiod::line_bulk::begin)
         .def("end", &gpiod::line_bulk::end);
@@ -188,7 +198,9 @@ PYBIND11_MODULE(_gpiod, m) {
 
     py::class_<gpiod::chip_iter> chip_iter(m, "chip_iter");
 
-    chip_iter.def(py::init<>());
+    chip_iter.def(py::init<>())
+        .def(py::self == py::self)
+        .def(py::self != py::self);
 
 
     m.def("begin",
@@ -201,5 +213,7 @@ PYBIND11_MODULE(_gpiod, m) {
 
     py::class_<gpiod::line_iter> line_iter(m, "line_iter");
 
-    line_iter.def(py::init<>());
+    line_iter.def(py::init<>())
+        .def(py::self == py::self)
+        .def(py::self != py::self);
 }

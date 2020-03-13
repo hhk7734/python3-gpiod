@@ -46,7 +46,10 @@ PYBIND11_MODULE(_gpiod, m) {
         .def("label", &gpiod::chip::label)
         .def("num_lines", &gpiod::chip::num_lines)
         .def("get_line", &gpiod::chip::get_line, py::arg("offset"))
-        .def("find_line", &gpiod::chip::find_line, py::arg("name"));
+        .def("find_line", &gpiod::chip::find_line, py::arg("name"))
+        .def("get_lines", &gpiod::chip::get_lines, py::arg("offsets"))
+        .def("get_all_lines", &gpiod::chip::get_all_lines)
+        .def("find_lines", &gpiod::chip::find_lines, py::arg("names"));
 
     chip.attr("OPEN_LOOKUP")    = int(gpiod::chip::OPEN_LOOKUP);
     chip.attr("OPEN_BY_PATH")   = int(gpiod::chip::OPEN_BY_PATH);

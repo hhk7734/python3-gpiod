@@ -177,6 +177,8 @@ PYBIND11_MODULE(_gpiod, m) {
         .def("event_wait", &gpiod::line_bulk::event_wait, py::arg("timeout"))
         .def(! py::self);
 
+    line_bulk.attr("MAX_LINES") = gpiod::line_bulk::MAX_LINES;
+
     py::class_<gpiod::line_bulk::iterator> iterator(line_bulk, "iterator");
 
     iterator.def(py::init<>())

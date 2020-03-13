@@ -1,3 +1,14 @@
+python3-gpiod (0.5.0) unstable; urgency=medium
+
+  * Add pybind11/chrono.h for std::chrono
+  * Prevent installation if libgpiodcxx v1.0 or lower
+  * Add xxx_lines into chip class
+  * Add operators
+  * Add MAX_LINES attribute
+  * Fix issue where 'setup.py sdist' is not executed
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Sat, 14 Mar 2020 02:37:13 +0900
+
 python3-gpiod (0.4.1) unstable; urgency=medium
 
   * Fix issue where pip does not install dependencies

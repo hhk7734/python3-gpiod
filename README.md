@@ -4,6 +4,8 @@
 
 # python3-gpiod
 
+Ref: <a href="https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git" target=_blank>https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git</a>
+
 ## Installation
 
 ```shell
@@ -16,7 +18,64 @@ sudo apt update \
 python3 -m pip install -U --user pip gpiod
 ```
 
+If you see **"OSError: pkg-config: Failed to find libgpiodcxx."**, you need to install libgpiodcxx manually.
+
+```shell
+sudo apt purge -y gpiod libgpiod-dev
+```
+
+```shell
+sudo apt install -y git autoconf-archive
+```
+
+```shell
+git clone git://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git \
+&& cd libgpiod
+```
+
+If the kernel version is 5.4 or lower, use `git checkout v1.4.2` to change the version.(Change it to less than v1.5)
+
+```shell
+./autogen.sh --enable-tools=yes --prefix=/usr --enable-bindings-cxx \
+&& make \
+&& sudo make install
+```
+
+```shell
+python3 -m pip install -U --user gpiod
+```
+
+## help command
+
+```python
+>>> import gpiod
+>>> help(gpiod)
+>>> help(gpiod.chip)
+>>> help(gpiod.chip.get_line)
+
+Help on instancemethod in module gpiod._gpiod:
+
+get_line(...)
+    get_line(self: gpiod._gpiod.chip, offset: int) -> gpiod::line
+
+    /**
+     * @brief Get the line exposed by this chip at given offset.
+     * @param offset Offset of the line.
+     * @return Line object.
+     */
+```
+
+## Test
+
+```shell
+python3 -m gpiod.test.blink <chip> <line offset>
+python3 -m gpiod.test.blinks <chip> <line offset1> [<line offset2> ...]
+python3 -m gpiod.test.button <chip> <line offset> [rising|falling|both]
+```
+
 ## Blink example
+
+### Python3
 
 ```python
 import gpiod
@@ -46,6 +105,8 @@ while True:
     led.set_value(1)
     time.sleep(0.1)
 ```
+
+### C++
 
 ```c++
 #include <chrono>

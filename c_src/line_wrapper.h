@@ -29,12 +29,54 @@
 void set_line_class(py::module &m) {
     py::class_<gpiod::line> line(m, "line");
 
-    line.def(py::init<>())
-        .def("offset", &gpiod::line::offset)
-        .def("name", &gpiod::line::name)
-        .def("consumer", &gpiod::line::consumer)
-        .def("direction", &gpiod::line::direction)
-        .def("active_state", &gpiod::line::active_state)
+    line.doc()
+        = "/**\n"
+          " * @brief Represents a single GPIO line.\n"
+          " *\n"
+          " * Internally this class holds a raw pointer to a GPIO line "
+          "descriptor and a\n"
+          " * reference to the parent chip. All line resources are freed when "
+          "the last\n"
+          " * reference to the parent chip is dropped.\n"
+          " */";
+
+    line.def(py::init<>(),
+             "/**\n"
+             " * @brief Default constructor. Creates an empty line object.\n"
+             " */")
+        .def("offset",
+             &gpiod::line::offset,
+             "/**\n"
+             " * @brief Get the offset of this line.\n"
+             " * @return Offet of this line.\n"
+             " */")
+        .def("name",
+             &gpiod::line::name,
+             "/**\n"
+             " * @brief Get the name of this line (if any).\n"
+             " * @return Name of this line or an empty string if it is "
+             "unnamed.\n"
+             " */")
+        .def("consumer",
+             &gpiod::line::consumer,
+             "/**\n"
+             " * @brief Get the consumer of this line (if any).\n"
+             " * @return Name of the consumer of this line or an empty string "
+             "if it\n"
+             " *         is unused.\n"
+             " */")
+        .def("direction",
+             &gpiod::line::direction,
+             "/**\n"
+             " * @brief Get current direction of this line.\n"
+             " * @return Current direction setting.\n"
+             " */")
+        .def("active_state",
+             &gpiod::line::active_state,
+             "/**\n"
+             " * @brief Get current active state of this line.\n"
+             " * @return Current active state setting.\n"
+             " */")
 #if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
         .def("bias", &gpiod::line::bias)
 #endif
@@ -44,11 +86,32 @@ void set_line_class(py::module &m) {
         .def("request",
              &gpiod::line::request,
              py::arg("config"),
-             py::arg("default_val") = 0)
-        .def("release", &gpiod::line::release)
+             py::arg("default_val") = 0,
+             "/**\n"
+             " * @brief Request this line.\n"
+             " * @param config Request config (see gpiod::line_request).\n"
+             " * @param default_val Default value - only matters for OUTPUT "
+             "direction.\n"
+             " */")
+        .def("release",
+             &gpiod::line::release,
+             "/**\n"
+             " * @brief Release the line if it was previously requested.\n"
+             " */")
         .def("is_requested", &gpiod::line::is_requested)
-        .def("get_value", &gpiod::line::get_value)
-        .def("set_value", &gpiod::line::set_value, py::arg("value"))
+        .def("get_value",
+             &gpiod::line::get_value,
+             "/**\n"
+             " * @brief Read the line value.\n"
+             " * @return Current value (0 or 1).\n"
+             " */")
+        .def("set_value",
+             &gpiod::line::set_value,
+             py::arg("value"),
+             "/**\n"
+             " * @brief Set the value of this line.\n"
+             " * @param val New value (0 or 1).\n"
+             " */")
 #if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
         .def("set_config",
              &gpiod::line::set_config,
@@ -61,8 +124,23 @@ void set_line_class(py::module &m) {
              &gpiod::line::set_direction_output,
              py::arg("value") = 0)
 #endif
-        .def("event_wait", &gpiod::line::event_wait, py::arg("timeout"))
-        .def("event_read", &gpiod::line::event_read)
+        .def("event_wait",
+             &gpiod::line::event_wait,
+             py::arg("timeout"),
+             "/**\n"
+             " * @brief Wait for an event on this line.\n"
+             " * @param timeout Time to wait before returning if no event "
+             "occurred.\n"
+             " * @return True if an event occurred and can be read, false if "
+             "the wait\n"
+             " *         timed out.\n"
+             " */")
+        .def("event_read",
+             &gpiod::line::event_read,
+             "/**\n"
+             " * @brief Read a line event.\n"
+             " * @return Line event object.\n"
+             " */")
 #if LIBGPIODCXX_VERSION_CODE >= LIBGPIODCXX_VERSION(1, 5)
         .def("event_read_multiple", &gpiod::line::event_read_multiple)
 #endif

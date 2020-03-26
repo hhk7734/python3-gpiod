@@ -107,7 +107,15 @@ void set_chip_class(py::module &m) {
              " * @param name Line name.\n"
              " * @return Line object.\n"
              " */")
-        .def("get_lines", &gpiod::chip::get_lines, py::arg("offsets"))
+        .def("get_lines",
+             &gpiod::chip::get_lines,
+             py::arg("offsets"),
+             "/**\n"
+             " * @brief Get a set of lines exposed by this chip at given "
+             "offsets.\n"
+             " * @param offsets Vector of line offsets.\n"
+             " * @return Set of lines held by a line_bulk object.\n"
+             " */")
         .def("get_all_lines", &gpiod::chip::get_all_lines)
         .def("find_lines", &gpiod::chip::find_lines, py::arg("names"))
         .def(py::self == py::self)

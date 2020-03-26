@@ -29,20 +29,59 @@
 void set_line_bulk_class(py::module &m) {
     py::class_<gpiod::line_bulk> line_bulk(m, "line_bulk");
 
-    line_bulk.def(py::init<>())
+    line_bulk.doc()
+        = "/**\n"
+          " * @brief Represents a set of GPIO lines.\n"
+          " *\n"
+          " * Internally an object of this class stores an array of line "
+          "objects\n"
+          " * owned by a single chip.\n"
+          " */";
+
+    line_bulk
+        .def(py::init<>(),
+             "/**\n"
+             " * @brief Default constructor. Creates an empty line_bulk "
+             "object.\n"
+             " */")
         .def(py::init<const std::vector<gpiod::line> &>())
         .def("append", &gpiod::line_bulk::append, py::arg("new_line"))
         .def("get", &gpiod::line_bulk::get, py::arg("offset"))
-        .def("size", &gpiod::line_bulk::size)
+        .def(
+            "size",
+            &gpiod::line_bulk::size,
+            "/**\n"
+            " * @brief Get the number of lines currently held by this object.\n"
+            " * @return Number of elements in this line_bulk.\n"
+            " */")
         .def("empty", &gpiod::line_bulk::empty)
         .def("clear", &gpiod::line_bulk::clear)
         .def("request",
              &gpiod::line_bulk::request,
              py::arg("config"),
-             py::arg("default_vals") = std::vector<int>())
-        .def("release", &gpiod::line_bulk::release)
+             py::arg("default_vals") = std::vector<int>(),
+             "/**\n"
+             " * @brief Request all lines held by this object.\n"
+             " * @param config Request config (see gpiod::line_request).\n"
+             " * @param default_vals Vector of default values. Only relevant "
+             "for\n"
+             " *                     output direction requests.\n"
+             " */")
+        .def("release",
+             &gpiod::line_bulk::release,
+             "/**\n"
+             " * @brief Release all lines held by this object.\n"
+             " */")
         .def("get_values", &gpiod::line_bulk::get_values)
-        .def("set_values", &gpiod::line_bulk::set_values, py::arg("values"))
+        .def("set_values",
+             &gpiod::line_bulk::set_values,
+             py::arg("values"),
+             "/**\n"
+             " * @brief Set values of all lines held by this object.\n"
+             " * @param values Vector of values to set. Must be the same size "
+             "as the\n"
+             " *               number of lines held by this line_bulk.\n"
+             " */")
         .def("event_wait", &gpiod::line_bulk::event_wait, py::arg("timeout"))
         .def(! py::self);
 

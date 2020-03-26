@@ -29,6 +29,11 @@
 void set_line_request_class(py::module &m) {
     py::class_<gpiod::line_request> line_request(m, "line_request");
 
+    line_request.doc()
+        = "/**\n"
+          " * @brief Stores the configuration for line requests.\n"
+          " */";
+
     line_request
         .def_property_readonly_static(
             "DIRECTION_AS_IS",

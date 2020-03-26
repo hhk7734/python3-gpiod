@@ -29,6 +29,11 @@
 void set_line_event_class(py::module &m) {
     py::class_<gpiod::line_event> line_event(m, "line_event");
 
+    line_event.doc()
+        = "/**\n"
+          " * @brief Describes a single GPIO line event.\n"
+          " */";
+
     line_event
         .def_property_readonly_static(
             "RISING_EDGE",

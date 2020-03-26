@@ -1,3 +1,10 @@
+python3-gpiod (0.5.1) unstable; urgency=medium
+
+  * Move xxx class into xxx_wrapper.h
+  * Add blink test module
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Fri, 20 Mar 2020 00:58:05 +0900
+
 python3-gpiod (0.5.0) unstable; urgency=medium
 
   * Add pybind11/chrono.h for std::chrono

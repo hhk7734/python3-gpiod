@@ -22,9 +22,12 @@
  * SOFTWARE.
  */
 
+// clang-format off
+#include "common.h"
+// clang-format on
+
 #include "chip_iter_wrapper.h"
 #include "chip_wrapper.h"
-#include "common.h"
 #include "line_bulk_wrapper.h"
 #include "line_event_wrapper.h"
 #include "line_iter_wrapper.h"

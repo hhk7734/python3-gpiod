@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "type_cast.h"
+
 #include <gpiod.hpp>
 #include <pybind11/chrono.h>
 #include <pybind11/operators.h>

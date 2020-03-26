@@ -22,41 +22,14 @@
  * SOFTWARE.
  */
 
-#include "chip_iter_wrapper.h"
-#include "chip_wrapper.h"
+#pragma once
+
 #include "common.h"
-#include "line_bulk_wrapper.h"
-#include "line_event_wrapper.h"
-#include "line_iter_wrapper.h"
-#include "line_request_wrapper.h"
-#include "line_wrapper.h"
 
-PYBIND11_MODULE(_gpiod, m) {
-    set_chip_class(m);
-    set_line_request_class(m);
-    set_line_class(m);
+void set_chip_iter_class(py::module &m) {
+    py::class_<gpiod::chip_iter> chip_iter(m, "chip_iter");
 
-    m.def("find_line", &gpiod::find_line, py::arg("name"));
-
-    set_line_event_class(m);
-    set_line_bulk_class(m);
-
-    m.def("make_chip_iter", &gpiod::make_chip_iter)
-        .def("begin",
-             py::overload_cast<gpiod::chip_iter>(&gpiod::begin),
-             py::arg("iter"))
-        .def("end",
-             py::overload_cast<const gpiod::chip_iter &>(&gpiod::end),
-             py::arg("iter"));
-
-    set_chip_iter_class(m);
-
-    m.def("begin",
-          py::overload_cast<gpiod::line_iter>(&gpiod::begin),
-          py::arg("iter"))
-        .def("end",
-             py::overload_cast<const gpiod::line_iter &>(&gpiod::end),
-             py::arg("iter"));
-
-    set_line_iter_class(m);
+    chip_iter.def(py::init<>())
+        .def(py::self == py::self)
+        .def(py::self != py::self);
 }

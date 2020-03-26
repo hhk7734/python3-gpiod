@@ -22,41 +22,23 @@
  * SOFTWARE.
  */
 
-#include "chip_iter_wrapper.h"
-#include "chip_wrapper.h"
+#pragma once
+
 #include "common.h"
-#include "line_bulk_wrapper.h"
-#include "line_event_wrapper.h"
-#include "line_iter_wrapper.h"
-#include "line_request_wrapper.h"
-#include "line_wrapper.h"
 
-PYBIND11_MODULE(_gpiod, m) {
-    set_chip_class(m);
-    set_line_request_class(m);
-    set_line_class(m);
+void set_line_event_class(py::module &m) {
+    py::class_<gpiod::line_event> line_event(m, "line_event");
 
-    m.def("find_line", &gpiod::find_line, py::arg("name"));
+    line_event
+        .def_property_readonly_static(
+            "RISING_EDGE",
+            [](py::object) { return int(gpiod::line_event::RISING_EDGE); })
+        .def_property_readonly_static("FALLING_EDGE", [](py::object) {
+            return int(gpiod::line_event::FALLING_EDGE);
+        });
 
-    set_line_event_class(m);
-    set_line_bulk_class(m);
-
-    m.def("make_chip_iter", &gpiod::make_chip_iter)
-        .def("begin",
-             py::overload_cast<gpiod::chip_iter>(&gpiod::begin),
-             py::arg("iter"))
-        .def("end",
-             py::overload_cast<const gpiod::chip_iter &>(&gpiod::end),
-             py::arg("iter"));
-
-    set_chip_iter_class(m);
-
-    m.def("begin",
-          py::overload_cast<gpiod::line_iter>(&gpiod::begin),
-          py::arg("iter"))
-        .def("end",
-             py::overload_cast<const gpiod::line_iter &>(&gpiod::end),
-             py::arg("iter"));
-
-    set_line_iter_class(m);
+    line_event.def(py::init<>())
+        .def_readwrite("timestamp", &gpiod::line_event::timestamp)
+        .def_readwrite("event_type", &gpiod::line_event::event_type)
+        .def_readwrite("source", &gpiod::line_event::source);
 }

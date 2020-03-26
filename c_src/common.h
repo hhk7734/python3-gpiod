@@ -22,41 +22,14 @@
  * SOFTWARE.
  */
 
-#include "chip_iter_wrapper.h"
-#include "chip_wrapper.h"
-#include "common.h"
-#include "line_bulk_wrapper.h"
-#include "line_event_wrapper.h"
-#include "line_iter_wrapper.h"
-#include "line_request_wrapper.h"
-#include "line_wrapper.h"
+#pragma once
 
-PYBIND11_MODULE(_gpiod, m) {
-    set_chip_class(m);
-    set_line_request_class(m);
-    set_line_class(m);
+#include <gpiod.hpp>
+#include <pybind11/chrono.h>
+#include <pybind11/operators.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
-    m.def("find_line", &gpiod::find_line, py::arg("name"));
+#define LIBGPIODCXX_VERSION(a, b) (((a) << 8) + (b))
 
-    set_line_event_class(m);
-    set_line_bulk_class(m);
-
-    m.def("make_chip_iter", &gpiod::make_chip_iter)
-        .def("begin",
-             py::overload_cast<gpiod::chip_iter>(&gpiod::begin),
-             py::arg("iter"))
-        .def("end",
-             py::overload_cast<const gpiod::chip_iter &>(&gpiod::end),
-             py::arg("iter"));
-
-    set_chip_iter_class(m);
-
-    m.def("begin",
-          py::overload_cast<gpiod::line_iter>(&gpiod::begin),
-          py::arg("iter"))
-        .def("end",
-             py::overload_cast<const gpiod::line_iter &>(&gpiod::end),
-             py::arg("iter"));
-
-    set_line_iter_class(m);
-}
+namespace py = pybind11;

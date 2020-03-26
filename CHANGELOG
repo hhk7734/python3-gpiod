@@ -1,3 +1,11 @@
+python3-gpiod (0.5.2) unstable; urgency=medium
+
+  * Add documentation for tested methods
+  * Add test code
+  * Update README.md
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Fri, 20 Mar 2020 13:17:41 +0900
+
 python3-gpiod (0.5.1) unstable; urgency=medium
 
   * Move xxx class into xxx_wrapper.h

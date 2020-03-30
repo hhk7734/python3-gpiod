@@ -10,8 +10,8 @@ Ref: <a href="https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git" target=
 
 ```shell
 sudo apt update \
-&& sudo apt install -y python3 python3-dev python3-pip \
-    gpiod libgpiod-dev pkg-config
+&& sudo apt install -y python3 python3-dev python3-pip pkg-config \
+    gpiod libgpiod-dev
 ```
 
 ```shell
@@ -25,7 +25,7 @@ sudo apt purge -y gpiod libgpiod-dev
 ```
 
 ```shell
-sudo apt install -y git autoconf-archive
+sudo apt install -y git libtool autoconf-archive
 ```
 
 ```shell

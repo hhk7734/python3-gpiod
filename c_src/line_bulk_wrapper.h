@@ -88,12 +88,14 @@ void set_line_bulk_class(py::module &m) {
     line_bulk.def_property_readonly_static(
         "MAX_LINES", [](py::object) { return gpiod::line_bulk::MAX_LINES; });
 
-    py::class_<gpiod::line_bulk::iterator> iterator(line_bulk, "iterator");
-
-    iterator.def(py::init<>())
-        .def(py::self == py::self)
-        .def(py::self != py::self);
-
-    line_bulk.def("begin", &gpiod::line_bulk::begin)
-        .def("end", &gpiod::line_bulk::end);
+    line_bulk.def(
+        "__iter__",
+        [](gpiod::line_bulk &self) {
+            return py::make_iterator(self.begin(), self.end());
+        },
+        py::keep_alive<0, 1>(), /* Essential: keep object alive while iterator
+                                   exists */
+        "/**\n"
+        " * @brief Iterator for iterating over lines held by line_bulk.\n"
+        " */");
 }

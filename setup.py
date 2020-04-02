@@ -33,7 +33,7 @@ CHANGELOG_PATH = path.join(BASE_DIR, "CHANGELOG")
 
 LIBGPIODCXX_VERSION_CODE = 0
 
-if sys.argv[1] not in ("egg_info", "sdist"):
+if sys.argv[1] not in ("clean", "egg_info", "sdist"):
     import pkgconfig
 
     if not pkgconfig.exists('libgpiodcxx'):

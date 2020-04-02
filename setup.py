@@ -37,7 +37,7 @@ if sys.argv[1] not in ("clean", "egg_info", "sdist"):
     import pkgconfig
 
     if not pkgconfig.exists('libgpiodcxx'):
-        raise OSError("pkg-config: Failed to find libgpiodcxx.")
+        raise OSError("\n\n\tpkg-config: Failed to find libgpiodcxx.\n")
 
     _libgpiodcxx_version = pkgconfig.modversion('libgpiodcxx')
 
@@ -45,7 +45,7 @@ if sys.argv[1] not in ("clean", "egg_info", "sdist"):
         int(_libgpiodcxx_version[0]) << 8) + int(_libgpiodcxx_version[2])
 
     if LIBGPIODCXX_VERSION_CODE < ((1 << 8) + 1):
-        raise OSError("gpiod: Supports version 1.1 or higher.")
+        raise OSError("\n\n\tgpiod: Supports version 1.1 or higher.\n")
 
 
 class get_pybind_include(object):

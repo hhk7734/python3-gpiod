@@ -33,7 +33,7 @@ git clone git://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git \
 && cd libgpiod
 ```
 
-If the kernel version is 5.4 or lower, use `git checkout v1.4.2` to change the version.(Change it to less than v1.5)
+If the kernel version is 5.4 or lower, use **`git checkout v1.4.2`** to change the version.(Change it to v1.1 or more and less than v1.5)
 
 ```shell
 ./autogen.sh --enable-tools=yes --prefix=/usr --enable-bindings-cxx \
@@ -70,6 +70,8 @@ get_line(...)
 ```shell
 python3 -m gpiod.test.blink <chip> <line offset>
 python3 -m gpiod.test.blinks <chip> <line offset1> [<line offset2> ...]
+python3 -m gpiod.test.sequential_blink <chip> <line offset1> \
+    [<line offset2> ...]
 python3 -m gpiod.test.button <chip> <line offset> [rising|falling|both]
 ```
 

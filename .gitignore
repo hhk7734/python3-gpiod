@@ -1,2 +1,4 @@
+build
 dist
 py_src/gpiod.egg-info
+tmp

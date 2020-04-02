@@ -1,3 +1,11 @@
+python3-gpiod (0.6.0) unstable; urgency=medium
+
+  * Fix issue where 'setup.py clean' is not executed
+  * Correct error messages to be noticeable
+  * Fix iterator in line_bulk class
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 02 Apr 2020 14:55:17 +0900
+
 python3-gpiod (0.5.4) unstable; urgency=medium
 
   * Update README.md

@@ -353,28 +353,43 @@ class line_event:
 
 class line_bulk:
     def __init__(self, lines: List[line] = []):
-        pass
+        self._m_bulk = lines
 
     def __del__(self):
         pass
 
     def append(self, new_line: line):
-        pass
+        if not new_line:
+            ValueError("line_bulk cannot hold empty line objects")
+
+        if len(self._m_bulk) >= self.MAX_LINES:
+            IndexError("maximum number of lines reached")
+
+        if len(self._m_bulk) >= 1 and \
+                self._m_bulk[0].get_chip() != new_line.get_chip():
+            ValueError("line_bulk cannot hold GPIO lines from different chips")
+
+        self._m_bulk.append(new_line)
 
     def get(self, offset: int) -> line:
-        pass
+        return self._m_bulk[offset]
 
-    def __getitem__(self, index: int) -> line:
-        pass
+    def __getitem__(self, offset: int) -> line:
+        return self._m_bulk[offset]
 
+    @property
     def size(self) -> int:
-        pass
+        return len(self._m_bulk)
 
+    def __len__(self) -> int:
+        return len(self._m_bulk)
+
+    @property
     def empty(self) -> bool:
-        pass
+        return len(self._m_bulk) == 0
 
     def clear(self):
-        pass
+        self._m_bulk = []
 
     def request(self, config: line_request, default_vals: List[int]):
         pass

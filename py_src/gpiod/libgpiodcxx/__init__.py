@@ -128,16 +128,38 @@ class chip:
         return self._m_chip.get()[0].num_lines
 
     def get_line(self, offset: int) -> line:
-        pass
+        self._throw_if_noref()
+
+        if offset >= self.num_lines or offset < 0:
+            raise IndexError("line offset out of range")
+
+        line_p = libgpiod.gpiod_chip_get_line(self._m_chip.get(), offset)
+        if not bool(line_p):
+            errno = get_errno()
+            raise OSError(errno,
+                          strerror(errno),
+                          "error getting GPIO line from chip")
+
+        return line(line_p, self)
 
     def find_line(self, name: str) -> line:
         pass
 
     def get_lines(self, offsets: List[int]) -> line_bulk:
-        pass
+        lines = line_bulk()
+
+        for it in offsets:
+            lines.append(self.get_line(it))
+
+        return lines
 
     def get_all_lines(self) -> line_bulk:
-        pass
+        lines = line_bulk()
+
+        for i in range(self.num_lines):
+            lines.append(self.get_line(i))
+
+        return lines
 
     def find_lines(self, names: List[str]) -> line_bulk:
         pass
@@ -309,7 +331,7 @@ class line_event:
 
 
 class line_bulk:
-    def __init__(self, lines: List[line]):
+    def __init__(self, lines: List[line] = []):
         pass
 
     def __del__(self):

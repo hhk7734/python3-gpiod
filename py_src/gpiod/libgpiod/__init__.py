@@ -146,7 +146,7 @@ gpiod_chip_open_by_name = wrap_libgpiod_func(
 
 gpiod_chip_open_by_number = wrap_libgpiod_func(
     "gpiod_chip_open_by_number",
-    [c_char_p, ],
+    [c_uint, ],
     POINTER(gpiod_chip)
 )
 

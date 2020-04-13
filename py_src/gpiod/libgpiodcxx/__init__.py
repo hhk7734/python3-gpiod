@@ -473,10 +473,7 @@ class line_bulk:
     def __bool__(self) -> bool:
         pass
 
-    MAX_LINES = None
+    MAX_LINES = libgpiod.GPIOD_LINE_BULK_MAX_LINES
 
-    def __iter__(self):
-        pass
-
-    def __next__(self) -> line:
-        pass
+    def __iter__(self) -> [].__iter__():
+        return self._m_bulk.__iter__()

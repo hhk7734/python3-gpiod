@@ -57,6 +57,17 @@ _LINE_FREE = 0
 _LINE_REQUESTED_VALUES = 1
 _LINE_REQUESTED_EVENTS = 2
 
+GPIOD_LINE_REQUEST_DIRECTION_AS_IS = 0
+GPIOD_LINE_REQUEST_DIRECTION_INPUT = 1
+GPIOD_LINE_REQUEST_DIRECTION_OUTPUT = 2
+GPIOD_LINE_REQUEST_EVENT_FALLING_EDGE = 3
+GPIOD_LINE_REQUEST_EVENT_RISING_EDGE = 4
+GPIOD_LINE_REQUEST_EVENT_BOTH_EDGES = 5
+
+GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN = 0b001
+GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE = 0b010
+GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW = 0b100
+
 
 class line_fd_handle(Structure):
     pass
@@ -188,4 +199,28 @@ gpiod_chip_find_line = wrap_libgpiod_func(
     "gpiod_chip_find_line",
     [POINTER(gpiod_chip), c_char_p, ],
     POINTER(gpiod_line)
+)
+
+gpiod_line_request = wrap_libgpiod_func(
+    "gpiod_line_request",
+    [POINTER(gpiod_line), POINTER(gpiod_line_request_config), c_int, ],
+    c_int
+)
+
+gpiod_line_release = wrap_libgpiod_func(
+    "gpiod_line_release",
+    [POINTER(gpiod_line), ],
+    None
+)
+
+gpiod_line_get_value = wrap_libgpiod_func(
+    "gpiod_line_get_value",
+    [POINTER(gpiod_line), ],
+    c_int
+)
+
+gpiod_line_set_value = wrap_libgpiod_func(
+    "gpiod_line_set_value",
+    [POINTER(gpiod_line), c_int, ],
+    c_int
 )

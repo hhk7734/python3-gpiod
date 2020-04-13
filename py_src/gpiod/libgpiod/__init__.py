@@ -47,6 +47,16 @@ __version__ = tuple(int(x) for x in gpiod_version_string().split(b'.'))
 
 GPIOD_LINE_BULK_MAX_LINES = 64
 
+GPIOD_LINE_DIRECTION_INPUT = 0
+GPIOD_LINE_DIRECTION_OUTPUT = 1
+
+GPIOD_LINE_ACTIVE_STATE_HIGH = 0
+GPIOD_LINE_ACTIVE_STATE_LOW = 1
+
+_LINE_FREE = 0
+_LINE_REQUESTED_VALUES = 1
+_LINE_REQUESTED_EVENTS = 2
+
 
 class line_fd_handle(Structure):
     pass
@@ -166,4 +176,10 @@ gpiod_chip_close = wrap_libgpiod_func(
     "gpiod_chip_close",
     [POINTER(gpiod_chip), ],
     None
+)
+
+gpiod_chip_get_line = wrap_libgpiod_func(
+    "gpiod_chip_get_line",
+    [POINTER(gpiod_chip), c_uint],
+    POINTER(gpiod_line)
 )

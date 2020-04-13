@@ -40,4 +40,4 @@ gpiod_version_string = wrap_libgpiod_func(
 )
 
 
-__version__ = gpiod_version_string().decode()
+__version__ = tuple(int(x) for x in gpiod_version_string().split(b'.'))

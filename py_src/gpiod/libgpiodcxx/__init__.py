@@ -181,35 +181,68 @@ class line_request:
 
 
 class line:
-    def __init__(self, line, owner: chip):
-        pass
+    def __init__(self,
+                 line_p: POINTER(libgpiod.gpiod_line) = None,
+                 owner: chip = chip()):
+        self._m_line = line_p
+        self._m_chip = owner
 
     def __del__(self):
         pass
 
+    @property
     def offset(self) -> int:
-        pass
+        self._throw_if_null()
 
+        return self._m_line[0].offset
+
+    @property
     def name(self) -> str:
-        pass
+        self._throw_if_null()
 
+        return self._m_line[0].name.decode()
+
+    @property
     def consumer(self) -> str:
-        pass
+        self._throw_if_null()
 
+        return self._m_line[0].consumer.decode()
+
+    @property
     def direction(self) -> int:
-        pass
+        self._throw_if_null()
 
+        return self.DIRECTION_INPUT \
+            if self._m_line[0].direction \
+            == libgpiod.GPIOD_LINE_DIRECTION_INPUT \
+            else self.DIRECTION_OUTPUT
+
+    @property
     def active_state(self) -> int:
-        pass
+        self._throw_if_null()
 
+        return self.ACTIVE_HIGH \
+            if self._m_line[0].active_state \
+            == libgpiod.GPIOD_LINE_ACTIVE_STATE_HIGH \
+            else self.ACTIVE_LOW
+
+    @property
     def is_used(self) -> bool:
-        pass
+        self._throw_if_null()
 
+        return self._m_line[0].used
+
+    @property
     def is_open_drain(self) -> bool:
-        pass
+        self._throw_if_null()
 
+        return self._m_line[0].open_drain
+
+    @property
     def is_open_source(self) -> bool:
-        pass
+        self._throw_if_null()
+
+        return self._m_line[0].open_source
 
     def request(self, config: line_request, default_val: int = 0):
         pass
@@ -217,8 +250,12 @@ class line:
     def release(self):
         pass
 
+    @property
     def is_requested(self) -> bool:
-        pass
+        self._throw_if_null()
+
+        return self._m_line[0].state == libgpiod._LINE_REQUESTED_VALUES \
+            or self._m_line[0].state == libgpiod._LINE_REQUESTED_EVENTS
 
     def get_value(self) -> int:
         pass
@@ -250,11 +287,15 @@ class line:
     def __bool__(self) -> bool:
         pass
 
-    DIRECTION_INPUT = None
-    DIRECTION_OUTPUT = None
+    DIRECTION_INPUT = 1
+    DIRECTION_OUTPUT = 2
 
-    ACTIVE_LOW = None
-    ACTIVE_HIGH = None
+    ACTIVE_LOW = 1
+    ACTIVE_HIGH = 2
+
+    def _throw_if_null(self):
+        if not bool(self._m_line):
+            raise RuntimeError("object not holding a GPIO line handle")
 
 
 class line_event:

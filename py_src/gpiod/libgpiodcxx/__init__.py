@@ -163,20 +163,21 @@ class chip:
 
 
 class line_request:
-    DIRECTION_AS_IS = None
-    DIRECTION_INPUT = None
-    DIRECTION_OUTPUT = None
-    EVENT_FALLING_EDGE = None
-    EVENT_RISING_EDGE = None
-    EVENT_BOTH_EDGES = None
+    DIRECTION_AS_IS = 1
+    DIRECTION_INPUT = 2
+    DIRECTION_OUTPUT = 3
+    EVENT_FALLING_EDGE = 4
+    EVENT_RISING_EDGE = 5
+    EVENT_BOTH_EDGES = 6
 
-    FLAG_ACTIVE_LOW = None
-    FLAG_OPEN_SOURCE = None
-    FLAG_OPEN_DRAIN = None
+    FLAG_ACTIVE_LOW = 0b001
+    FLAG_OPEN_SOURCE = 0b010
+    FLAG_OPEN_DRAIN = 0b100
 
     def __init__(self):
-        self.consumer = None
-        self.flags = None
+        self.consumer = ""
+        self.request_type = 0
+        self.flags = 0
 
 
 class line:

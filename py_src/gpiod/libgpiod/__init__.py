@@ -129,3 +129,35 @@ gpiod_line_event._fields_ = [
     ("ts", timespec),
     ("event_type", c_int),
 ]
+
+# Function
+
+gpiod_chip_open = wrap_libgpiod_func(
+    "gpiod_chip_open",
+    [c_char_p, ],
+    POINTER(gpiod_chip)
+)
+
+gpiod_chip_open_by_name = wrap_libgpiod_func(
+    "gpiod_chip_open_by_name",
+    [c_char_p, ],
+    POINTER(gpiod_chip)
+)
+
+gpiod_chip_open_by_number = wrap_libgpiod_func(
+    "gpiod_chip_open_by_number",
+    [c_char_p, ],
+    POINTER(gpiod_chip)
+)
+
+gpiod_chip_open_by_label = wrap_libgpiod_func(
+    "gpiod_chip_open_by_label",
+    [c_char_p, ],
+    POINTER(gpiod_chip)
+)
+
+gpiod_chip_open_lookup = wrap_libgpiod_func(
+    "gpiod_chip_open_lookup",
+    [c_char_p, ],
+    POINTER(gpiod_chip)
+)

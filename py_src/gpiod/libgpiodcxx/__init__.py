@@ -367,19 +367,20 @@ class line:
         pass
 
     def get_chip(self) -> chip:
-        pass
+        return self._m_chip
 
     def reset(self):
-        pass
+        self._m_line_p = None
+        self._m_chip.reset()
 
     def __eq__(self, other: line) -> bool:
-        pass
+        return self._m_line == other._m_line
 
     def __ne__(self, other: line) -> bool:
-        pass
+        return self._m_line != other._m_line
 
     def __bool__(self) -> bool:
-        pass
+        return bool(self._m_line)
 
     DIRECTION_INPUT = 1
     DIRECTION_OUTPUT = 2

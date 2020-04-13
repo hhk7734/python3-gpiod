@@ -81,9 +81,17 @@ class shared_chip:
         if bool(self._chip_p):
             chip_deleter(self._chip_p)
 
+    def __bool__(self):
+        return bool(self._chip_p)
+
 
 class chip:
-    def __init__(self, device=None, how: int = chip.OPEN_LOOKUP):
+    def __init__(self, device=None, how: int = chip.OPEN_LOOKUP,
+                 chip_p: POINTER(libgpiod.gpiod_chip) = None):
+        if(bool(chip_p)):
+            self._m_chip = chip_p
+            return
+
         self._m_chip = shared_chip()
         if(device is not None):
             self.open(device, how)
@@ -109,6 +117,7 @@ class chip:
         self._m_chip = shared_chip(chip_p)
 
     def reset(self):
+        # Act like shared_ptr::reset()
         self._m_chip = shared_chip()
 
     @property
@@ -142,7 +151,8 @@ class chip:
                           strerror(errno),
                           "error getting GPIO line from chip")
 
-        return line(line_p, self)
+        # Failed to deepcopy due to pointer of ctypes
+        return line(line_p, chip(chip_p=self._m_chip))
 
     def find_line(self, name: str) -> line:
         self._throw_if_noref()
@@ -155,7 +165,9 @@ class chip:
                           strerror(errno),
                           "error looking up GPIO line by name")
 
-        return line(line_p, self) if bool(line_p) else line()
+        # Failed to deepcopy due to pointer of ctypes
+        return line(line_p, chip(chip_p=self._m_chip)) \
+            if bool(line_p) else line()
 
     def get_lines(self, offsets: List[int]) -> line_bulk:
         lines = line_bulk()

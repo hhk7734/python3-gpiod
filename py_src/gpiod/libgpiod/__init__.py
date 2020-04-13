@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 from ctypes import CDLL, \
-    c_bool, c_char, c_int, c_uint, c_char_p, \
+    c_bool, c_char, c_int, c_uint, c_long, c_char_p, \
     POINTER, pointer, \
     Structure
 
@@ -45,8 +45,14 @@ gpiod_version_string = wrap_libgpiod_func(
 
 __version__ = tuple(int(x) for x in gpiod_version_string().split(b'.'))
 
+GPIOD_LINE_BULK_MAX_LINES = 64
+
 
 class line_fd_handle(Structure):
+    pass
+
+
+class timespec(Structure):
     pass
 
 
@@ -58,13 +64,26 @@ class gpiod_line(Structure):
     pass
 
 
+class gpiod_line_bulk(Structure):
+    pass
+
+
 class gpiod_line_request_config(Structure):
+    pass
+
+
+class gpiod_line_event(Structure):
     pass
 
 
 line_fd_handle._fields_ = [
     ("fd", c_int),
     ("refcount", c_int),
+]
+
+timespec._fields_ = [
+    ("tv_sec", c_long),
+    ("tv_nsec", c_long),
 ]
 
 gpiod_chip._fields_ = [
@@ -95,8 +114,18 @@ gpiod_line._fields_ = [
     ("consumer", c_char * 32),
 ]
 
+gpiod_line_bulk._fields_ = [
+    ("lines", POINTER(gpiod_line) * GPIOD_LINE_BULK_MAX_LINES),
+    ("num_lines", c_uint),
+]
+
 gpiod_line_request_config._fields_ = [
     ("consumer", c_char_p),
     ("request_type", c_int),
     ("flags", c_int),
+]
+
+gpiod_line_event._fields_ = [
+    ("ts", timespec),
+    ("event_type", c_int),
 ]

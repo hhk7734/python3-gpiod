@@ -180,6 +180,12 @@ gpiod_chip_close = wrap_libgpiod_func(
 
 gpiod_chip_get_line = wrap_libgpiod_func(
     "gpiod_chip_get_line",
-    [POINTER(gpiod_chip), c_uint],
+    [POINTER(gpiod_chip), c_uint, ],
+    POINTER(gpiod_line)
+)
+
+gpiod_chip_find_line = wrap_libgpiod_func(
+    "gpiod_chip_find_line",
+    [POINTER(gpiod_chip), c_char_p, ],
     POINTER(gpiod_line)
 )

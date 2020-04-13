@@ -21,7 +21,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
-from ctypes import CDLL, c_char_p
+from ctypes import CDLL, \
+    c_bool, c_char, c_int, c_uint, c_char_p, \
+    POINTER, pointer, \
+    Structure
 
 libgpiod = CDLL("libgpiod.so")
 
@@ -41,3 +44,49 @@ gpiod_version_string = wrap_libgpiod_func(
 
 
 __version__ = tuple(int(x) for x in gpiod_version_string().split(b'.'))
+
+
+class line_fd_handle(Structure):
+    pass
+
+
+class gpiod_chip(Structure):
+    pass
+
+
+class gpiod_line(Structure):
+    pass
+
+
+line_fd_handle._fields_ = [
+    ("fd", c_int),
+    ("refcount", c_int),
+]
+
+gpiod_chip._fields_ = [
+    ("lines", POINTER(POINTER(gpiod_line))),
+    ("num_lines", c_uint),
+
+    ("fd", c_int),
+
+    ("name", c_char * 32),
+    ("label", c_char * 32),
+]
+
+gpiod_line._fields_ = [
+    ("offset", c_uint),
+    ("direction", c_int),
+    ("active_state", c_int),
+    ("used", c_bool),
+    ("open_source", c_bool),
+    ("open_drain", c_bool),
+
+    ("state", c_int),
+    ("up_to_date", c_bool),
+
+    ("chip", POINTER(line_fd_handle)),
+    ("e_fd_handle", POINTER(gpiod_chip)),
+
+    ("name", c_char * 32),
+    ("consumer", c_char * 32),
+]

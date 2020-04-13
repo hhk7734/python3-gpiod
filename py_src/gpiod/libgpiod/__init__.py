@@ -58,6 +58,10 @@ class gpiod_line(Structure):
     pass
 
 
+class gpiod_line_request_config(Structure):
+    pass
+
+
 line_fd_handle._fields_ = [
     ("fd", c_int),
     ("refcount", c_int),
@@ -89,4 +93,10 @@ gpiod_line._fields_ = [
 
     ("name", c_char * 32),
     ("consumer", c_char * 32),
+]
+
+gpiod_line_request_config._fields_ = [
+    ("consumer", c_char_p),
+    ("request_type", c_int),
+    ("flags", c_int),
 ]

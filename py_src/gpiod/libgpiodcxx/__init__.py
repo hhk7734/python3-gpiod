@@ -26,6 +26,7 @@ from .. import libgpiod
 from ctypes import POINTER, \
     get_errno
 from datetime import datetime
+from errno import ENOENT
 from os import strerror
 from typing import List
 
@@ -143,7 +144,17 @@ class chip:
         return line(line_p, self)
 
     def find_line(self, name: str) -> line:
-        pass
+        self._throw_if_noref()
+
+        line_p = libgpiod.gpiod_chip_find_line(
+            self._m_chip.get(), name.encode())
+        errno = get_errno()
+        if not bool(line_p) and errno != ENOENT:
+            raise OSError(errno,
+                          strerror(errno),
+                          "error looking up GPIO line by name")
+
+        return line(line_p, self) if bool(line_p) else line()
 
     def get_lines(self, offsets: List[int]) -> line_bulk:
         lines = line_bulk()
@@ -162,7 +173,17 @@ class chip:
         return lines
 
     def find_lines(self, names: List[str]) -> line_bulk:
-        pass
+        lines = line_bulk()
+
+        for it in names:
+            a_line = self.find_line(it)
+            if not a_line:
+                lines.clear()
+                return lines
+
+            lines.append(a_line)
+
+        return lines
 
     def __eq__(self, other: chip) -> bool:
         return self._m_chip.get() == other._m_chip.get()

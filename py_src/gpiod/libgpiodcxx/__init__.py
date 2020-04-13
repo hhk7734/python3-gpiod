@@ -23,12 +23,19 @@ SOFTWARE.
 '''
 from .. import libgpiod
 
+from ctypes import POINTER, \
+    get_errno
 from datetime import datetime
+from os import strerror
 from typing import List
 
 
 class chip:
-    pass
+    OPEN_LOOKUP = 1
+    OPEN_BY_PATH = 2
+    OPEN_BY_NAME = 3
+    OPEN_BY_LABEL = 4
+    OPEN_BY_NUMBER = 5
 
 
 class line:
@@ -47,18 +54,60 @@ class line_request:
     pass
 
 
+open_funcs = {
+    chip.OPEN_LOOKUP: libgpiod.gpiod_chip_open_lookup,
+    chip.OPEN_BY_PATH: libgpiod.gpiod_chip_open,
+    chip.OPEN_BY_NAME: libgpiod.gpiod_chip_open_by_name,
+    chip.OPEN_BY_LABEL: libgpiod.gpiod_chip_open_by_label,
+    chip.OPEN_BY_NUMBER: libgpiod.gpiod_chip_open_by_number,
+}
+
+
+def chip_deleter(chip_p: POINTER(libgpiod.gpiod_chip)):
+    libgpiod.gpiod_chip_close(chip_p)
+
+
+class shared_chip:
+    def __init__(self,
+                 chip_p: POINTER(libgpiod.gpiod_chip) = None):
+        self._chip_p = chip_p
+
+    def get(self):
+        return self._chip_p
+
+    def __del__(self):
+        if bool(self._chip_p):
+            chip_deleter(self._chip_p)
+
+
 class chip:
-    def __init__(self, device, how: int):
-        pass
+    def __init__(self, device=None, how: int = chip.OPEN_LOOKUP):
+        self._m_chip = shared_chip()
+        if(device is not None):
+            self.open(device, how)
 
     def __del__(self):
         pass
 
-    def open(self, device, how: int):
-        pass
+    def open(self, device, how: int = chip.OPEN_LOOKUP):
+        if(how == chip.OPEN_BY_NUMBER):
+            device = int(device)
+        else:
+            device = str(device).decode()
+
+        func = open_funcs[how]
+
+        chip_p = func(device)
+        if not bool(chip_p):
+            errno = get_errno()
+            raise OSError(errno,
+                          strerror(errno),
+                          "cannot open GPIO device {}".format(device))
+
+        self._m_chip = shared_chip(chip_p)
 
     def reset(self):
-        pass
+        self._m_chip = shared_chip()
 
     def name(self) -> str:
         pass
@@ -93,11 +142,11 @@ class chip:
     def __bool__(self) -> bool:
         pass
 
-    OPEN_LOOKUP = None
-    OPEN_BY_PATH = None
-    OPEN_BY_NAME = None
-    OPEN_BY_LABEL = None
-    OPEN_BY_NUMBER = None
+    OPEN_LOOKUP = 1
+    OPEN_BY_PATH = 2
+    OPEN_BY_NAME = 3
+    OPEN_BY_LABEL = 4
+    OPEN_BY_NUMBER = 5
 
 
 class line_request:

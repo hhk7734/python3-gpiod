@@ -69,10 +69,6 @@ GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE = 0b010
 GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW = 0b100
 
 
-class line_fd_handle(Structure):
-    pass
-
-
 class timespec(Structure):
     pass
 
@@ -96,11 +92,6 @@ class gpiod_line_request_config(Structure):
 class gpiod_line_event(Structure):
     pass
 
-
-line_fd_handle._fields_ = [
-    ("fd", c_int),
-    ("refcount", c_int),
-]
 
 timespec._fields_ = [
     ("tv_sec", c_long),
@@ -128,8 +119,8 @@ gpiod_line._fields_ = [
     ("state", c_int),
     ("up_to_date", c_bool),
 
-    ("chip", POINTER(line_fd_handle)),
-    ("e_fd_handle", POINTER(gpiod_chip)),
+    ("chip", POINTER(gpiod_chip)),
+    ("fd", c_int),
 
     ("name", c_char * 32),
     ("consumer", c_char * 32),

@@ -23,7 +23,8 @@ SOFTWARE.
 '''
 from .. import libgpiod
 
-from ctypes import POINTER, \
+from ctypes import POINTER, pointer, \
+    c_int, \
     get_errno
 from datetime import datetime
 from errno import ENOENT
@@ -223,6 +224,25 @@ class line_request:
         self.flags = 0
 
 
+reqtype_mapping = {
+    line_request.DIRECTION_AS_IS: libgpiod.GPIOD_LINE_REQUEST_DIRECTION_AS_IS,
+    line_request.DIRECTION_INPUT: libgpiod.GPIOD_LINE_REQUEST_DIRECTION_INPUT,
+    line_request.DIRECTION_OUTPUT: libgpiod.GPIOD_LINE_REQUEST_DIRECTION_OUTPUT,
+    line_request.EVENT_FALLING_EDGE:
+        libgpiod.GPIOD_LINE_REQUEST_EVENT_FALLING_EDGE,
+    line_request.EVENT_RISING_EDGE:
+        libgpiod.GPIOD_LINE_REQUEST_EVENT_RISING_EDGE,
+    line_request.EVENT_BOTH_EDGES:
+        libgpiod.GPIOD_LINE_REQUEST_EVENT_BOTH_EDGES,
+}
+
+reqflag_mapping = {
+    line_request.FLAG_ACTIVE_LOW: libgpiod.GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW,
+    line_request.FLAG_OPEN_DRAIN: libgpiod.GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN,
+    line_request.FLAG_OPEN_SOURCE: libgpiod.GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE,
+}
+
+
 class line:
     def __init__(self,
                  line_p: POINTER(libgpiod.gpiod_line) = None,
@@ -288,10 +308,25 @@ class line:
         return self._m_line[0].open_source
 
     def request(self, config: line_request, default_val: int = 0):
-        pass
+        self._throw_if_null()
+
+        conf = libgpiod.gpiod_line_request_config()
+        conf.consumer = config.consumer.encode()
+        conf.request_type = reqtype_mapping[config.request_type]
+        conf.flags = 0
+
+        rv = libgpiod.gpiod_line_request(
+            self._m_line, pointer(conf), default_val)
+        if rv:
+            errno = get_errno()
+            raise OSError(errno,
+                          strerror(errno),
+                          "error requesting GPIO line")
 
     def release(self):
-        pass
+        self._throw_if_null()
+
+        libgpiod.gpiod_line_release(self._m_line)
 
     @property
     def is_requested(self) -> bool:
@@ -301,10 +336,26 @@ class line:
             or self._m_line[0].state == libgpiod._LINE_REQUESTED_EVENTS
 
     def get_value(self) -> int:
-        pass
+        self._throw_if_null()
+
+        rv = libgpiod.gpiod_line_get_value(self._m_line)
+        if rv == -1:
+            errno = get_errno()
+            raise OSError(errno,
+                          strerror(errno),
+                          "error reading GPIO line value")
+
+        return rv
 
     def set_value(self, val: int):
-        pass
+        self._throw_if_null()
+
+        rv = libgpiod.gpiod_line_set_value(self._m_line, val)
+        if rv:
+            errno = get_errno()
+            raise OSError(errno,
+                          strerror(errno),
+                          "error setting GPIO line value")
 
     def event_wait(self, timeout: datetime) -> bool:
         pass

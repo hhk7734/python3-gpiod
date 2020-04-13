@@ -342,13 +342,13 @@ class line:
 
 
 class line_event:
-    RISING_EDGE = None
-    FALLING_EDGE = None
+    RISING_EDGE = 1
+    FALLING_EDGE = 2
 
     def __init__(self):
-        self.timestamp = None
-        self.event_type = None
-        self.source = None
+        self.timestamp = datetime()
+        self.event_type = 0
+        self.source = line()
 
 
 class line_bulk:

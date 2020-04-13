@@ -109,14 +109,23 @@ class chip:
     def reset(self):
         self._m_chip = shared_chip()
 
+    @property
     def name(self) -> str:
-        pass
+        self._throw_if_noref()
 
+        return self._m_chip.get()[0].name.decode()
+
+    @property
     def label(self) -> str:
-        pass
+        self._throw_if_noref()
 
+        return self._m_chip.get()[0].label.decode()
+
+    @property
     def num_lines(self) -> int:
-        pass
+        self._throw_if_noref()
+
+        return self._m_chip.get()[0].num_lines
 
     def get_line(self, offset: int) -> line:
         pass
@@ -134,19 +143,23 @@ class chip:
         pass
 
     def __eq__(self, other: chip) -> bool:
-        pass
+        return self._m_chip.get() == other._m_chip.get()
 
     def __ne__(self, other: chip) -> bool:
-        pass
+        return self._m_chip.get() != other._m_chip.get()
 
     def __bool__(self) -> bool:
-        pass
+        return bool(self._m_chip.get())
 
     OPEN_LOOKUP = 1
     OPEN_BY_PATH = 2
     OPEN_BY_NAME = 3
     OPEN_BY_LABEL = 4
     OPEN_BY_NUMBER = 5
+
+    def _throw_if_noref(self):
+        if not bool(self._m_chip.get()):
+            raise RuntimeError("object not associated with an open GPIO chip")
 
 
 class line_request:

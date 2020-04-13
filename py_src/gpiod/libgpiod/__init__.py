@@ -26,7 +26,7 @@ from ctypes import CDLL, \
     POINTER, pointer, \
     Structure
 
-libgpiod = CDLL("libgpiod.so")
+libgpiod = CDLL("libgpiod.so", use_errno=True)
 
 
 def wrap_libgpiod_func(name: str, argtypes: list, restype):
@@ -160,4 +160,10 @@ gpiod_chip_open_lookup = wrap_libgpiod_func(
     "gpiod_chip_open_lookup",
     [c_char_p, ],
     POINTER(gpiod_chip)
+)
+
+gpiod_chip_close = wrap_libgpiod_func(
+    "gpiod_chip_close",
+    [POINTER(gpiod_chip), ],
+    None
 )

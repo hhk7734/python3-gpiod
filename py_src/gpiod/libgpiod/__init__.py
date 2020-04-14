@@ -68,6 +68,9 @@ GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN = 0b001
 GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE = 0b010
 GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW = 0b100
 
+GPIOD_LINE_EVENT_RISING_EDGE = 0
+GPIOD_LINE_EVENT_FALLING_EDGE = 1
+
 
 class timespec(Structure):
     pass
@@ -213,5 +216,17 @@ gpiod_line_get_value = wrap_libgpiod_func(
 gpiod_line_set_value = wrap_libgpiod_func(
     "gpiod_line_set_value",
     [POINTER(gpiod_line), c_int, ],
+    c_int
+)
+
+gpiod_line_event_wait = wrap_libgpiod_func(
+    "gpiod_line_event_wait",
+    [POINTER(gpiod_line), POINTER(timespec), ],
+    c_int
+)
+
+gpiod_line_event_read = wrap_libgpiod_func(
+    "gpiod_line_event_read",
+    [POINTER(gpiod_line), POINTER(gpiod_line_event), ],
     c_int
 )

@@ -33,6 +33,7 @@ python3 -m pip install -U --user pip gpiod
 python3 -m gpiod.test.blink <chip> <line offset>
 python3 -m gpiod.test.sequential_blink <chip> <line offset1> \
     [<line offset2> ...]
+python3 -m gpiod.test.button <chip> <line offset> [rising|falling|both]
 ```
 
 ## Blink example

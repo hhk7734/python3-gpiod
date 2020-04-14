@@ -382,7 +382,7 @@ class line:
         return self._m_chip
 
     def reset(self):
-        self._m_line_p = None
+        self._m_line = None
         self._m_chip.reset()
 
     def __eq__(self, other: line) -> bool:

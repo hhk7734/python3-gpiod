@@ -21,4 +21,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
-from .libgpiodcxx import chip, line, line_bulk, line_event, line_request
+from . import libgpiodcxx
+
+
+class chip(libgpiodcxx.chip):
+    pass
+
+
+class line(libgpiodcxx.line):
+    pass
+
+
+class line_bulk(libgpiodcxx.line_bulk):
+    pass
+
+
+class line_event(libgpiodcxx.line_event):
+    pass
+
+
+class line_request(libgpiodcxx.line_request):
+    pass

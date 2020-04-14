@@ -26,8 +26,8 @@ from .. import libgpiod
 from ctypes import POINTER, pointer, \
     c_int, \
     get_errno
-from datetime import timedelta
-from errno import ENOENT
+from datetime import timedelta, datetime
+from errno import ENOENT, EPERM
 from os import strerror
 from typing import List
 
@@ -370,13 +370,58 @@ class line:
                           "error setting GPIO line value")
 
     def event_wait(self, timeout: timedelta) -> bool:
-        pass
+        self._throw_if_null()
+
+        ts = libgpiod.timespec()
+        ts.tv_sec = (timeout.days * 86400) + timeout.seconds
+        ts.tv_nsec = timeout.microseconds * 1000
+
+        rv = libgpiod.gpiod_line_event_wait(self._m_line, pointer(ts))
+        if rv < 0:
+            errno = get_errno()
+            raise OSError(errno,
+                          strerror(errno),
+                          "error polling for events")
+
+        return bool(rv)
 
     def event_read(self) -> line_event:
-        pass
+        self._throw_if_null()
+
+        event_buf = libgpiod.gpiod_line_event()
+        event = line_event()
+
+        rv = libgpiod.gpiod_line_event_read(self._m_line, pointer(event_buf))
+        if rv < 0:
+            errno = get_errno()
+            raise OSError(errno,
+                          strerror(errno),
+                          "error reading line event")
+
+        if event_buf.event_type == libgpiod.GPIOD_LINE_EVENT_RISING_EDGE:
+            event.event_type = line_event.RISING_EDGE
+        elif event_buf.event_type == libgpiod.GPIOD_LINE_EVENT_FALLING_EDGE:
+            event.event_type = line_event.FALLING_EDGE
+
+        event.timestamp = datetime(year=1970, month=1, day=1) \
+            + timedelta(
+            days=event_buf.ts.tv_sec // 86400,
+            seconds=event_buf.ts.tv_sec % 86400,
+            microseconds=event_buf.ts.tv_nsec // 1000)
+
+        event.source = self
+
+        return event
 
     def event_get_fd(self) -> int:
-        pass
+        self._throw_if_null()
+
+        if self._m_line[0].state != libgpiod._LINE_REQUESTED_EVENTS:
+            raise OSError(EPERM,
+                          strerror(EPERM),
+                          "unable to get the line event file descriptor")
+
+        return self._m_line[0].fd
 
     def get_chip(self) -> chip:
         return self._m_chip

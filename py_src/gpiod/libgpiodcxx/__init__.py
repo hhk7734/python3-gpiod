@@ -469,14 +469,15 @@ class line_bulk:
 
     def append(self, new_line: line):
         if not new_line:
-            ValueError("line_bulk cannot hold empty line objects")
+            raise ValueError("line_bulk cannot hold empty line objects")
 
         if len(self._m_bulk) >= self.MAX_LINES:
-            IndexError("maximum number of lines reached")
+            raise IndexError("maximum number of lines reached")
 
         if len(self._m_bulk) >= 1 and \
                 self._m_bulk[0].get_chip() != new_line.get_chip():
-            ValueError("line_bulk cannot hold GPIO lines from different chips")
+            raise ValueError(
+                "line_bulk cannot hold GPIO lines from different chips")
 
         self._m_bulk.append(new_line)
 

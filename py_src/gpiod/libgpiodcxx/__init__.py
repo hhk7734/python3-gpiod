@@ -501,25 +501,90 @@ class line_bulk:
     def clear(self):
         self._m_bulk = []
 
-    def request(self, config: line_request, default_vals: List[int]):
-        pass
+    def request(self, config: line_request, default_vals: List[int] = []):
+        self._throw_if_empty()
+
+        if not len(default_vals):
+            default_vals = [0] * self.size
+
+        if self.size != len(default_vals):
+            raise ValueError("the number of default values must correspond "
+                             "with the number of lines")
+
+        try:
+            for i in range(self.size):
+                self._m_bulk[i].request(config, default_vals[i])
+        except OSError as e:
+            self.release()
+            raise e
 
     def release(self):
-        pass
+        self._throw_if_empty()
+
+        for it in self._m_bulk:
+            it.release()
 
     def get_values(self) -> List[int]:
-        pass
+        self._throw_if_empty()
+
+        values = []
+        for it in self._m_bulk:
+            values.append(it.get_value())
 
     def set_values(self, values: List[int]):
-        pass
+        self._throw_if_empty()
+
+        if self.size != len(values):
+            raise ValueError("the size of values array must correspond with "
+                             "the number of lines")
+
+        for i in range(self.size):
+            self._m_bulk[i].set_value(values[i])
 
     def event_wait(self, timeout: timedelta) -> line_bulk:
-        pass
+        self._throw_if_empty()
+
+        bulk = libgpiod.gpiod_line_bulk()
+        event_bulk = libgpiod.gpiod_line_bulk()
+        ts = libgpiod.timespec()
+        ret = line_bulk()
+
+        self._to_line_bulk(pointer(bulk))
+
+        event_bulk.num_lines = 0
+
+        ts.tv_sec = (timeout.days * 86400) + timeout.seconds
+        ts.tv_nsec = timeout.microseconds * 1000
+
+        rv = libgpiod.gpiod_line_event_wait_bulk(pointer(bulk),
+                                                 pointer(ts),
+                                                 pointer(event_bulk))
+        if rv < 0:
+            errno = get_errno()
+            raise OSError(errno,
+                          strerror(errno),
+                          "error polling for events")
+        elif rv > 0:
+            for i in range(event_bulk.num_lines):
+                ret.append(
+                    line(event_bulk.lines[i], self._m_bulk[i].get_chip()))
+
+        return ret
 
     def __bool__(self) -> bool:
-        pass
+        return not self.empty
 
     MAX_LINES = libgpiod.GPIOD_LINE_BULK_MAX_LINES
 
     def __iter__(self) -> [].__iter__():
         return self._m_bulk.__iter__()
+
+    def _throw_if_empty(self):
+        if self.empty:
+            raise RuntimeError("line_bulk not holding any GPIO lines")
+
+    def _to_line_bulk(self, bulk: POINTER(libgpiod.gpiod_line_bulk)):
+        bulk[0].num_lines = 0
+        for it in self._m_bulk:
+            bulk[0].lines[bulk[0].num_lines] = it._m_line
+            bulk[0].num_lines += 1

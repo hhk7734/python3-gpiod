@@ -26,7 +26,7 @@ from .. import libgpiod
 from ctypes import POINTER, pointer, \
     c_int, \
     get_errno
-from datetime import datetime
+from datetime import timedelta
 from errno import ENOENT
 from os import strerror
 from typing import List
@@ -369,7 +369,7 @@ class line:
                           strerror(errno),
                           "error setting GPIO line value")
 
-    def event_wait(self, timeout: datetime) -> bool:
+    def event_wait(self, timeout: timedelta) -> bool:
         pass
 
     def event_read(self) -> line_event:
@@ -410,7 +410,7 @@ class line_event:
     FALLING_EDGE = 2
 
     def __init__(self):
-        self.timestamp = datetime()
+        self.timestamp = timedelta()
         self.event_type = 0
         self.source = line()
 
@@ -467,7 +467,7 @@ class line_bulk:
     def set_values(self, values: List[int]):
         pass
 
-    def event_wait(self, timeout: datetime) -> line_bulk:
+    def event_wait(self, timeout: timedelta) -> line_bulk:
         pass
 
     def __bool__(self) -> bool:

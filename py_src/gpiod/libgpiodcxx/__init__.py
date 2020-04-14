@@ -462,7 +462,9 @@ class line_event:
 
 class line_bulk:
     def __init__(self, lines: List[line] = []):
-        self._m_bulk = lines
+        # If assigned lines by reference, when using line_bulk(), Changed lists
+        # can be assigned, not empty lists.
+        self._m_bulk = lines.copy()
 
     def __del__(self):
         pass

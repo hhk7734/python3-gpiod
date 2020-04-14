@@ -1,3 +1,14 @@
+python3-gpiod (1.0.0) unstable; urgency=medium
+
+  * libgpiod: call libgpiod.so using ctypes
+  * libgpiodcxx: implement chip class
+  * libgpiodcxx: implement line class
+  * libgpiodcxx: implement line_bulk class
+  * libgpiodcxx: implement line_event class
+  * libgpiodcxx: implement line_request class
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Wed, 15 Apr 2020 03:47:31 +0900
+
 python3-gpiod (0.6.0) unstable; urgency=medium
 
   * Fix issue where 'setup.py clean' is not executed

@@ -230,3 +230,9 @@ gpiod_line_event_read = wrap_libgpiod_func(
     [POINTER(gpiod_line), POINTER(gpiod_line_event), ],
     c_int
 )
+
+gpiod_line_event_wait_bulk = wrap_libgpiod_func(
+    "gpiod_line_event_wait_bulk",
+    [POINTER(gpiod_line_bulk), POINTER(timespec), POINTER(gpiod_line_bulk), ],
+    c_int
+)

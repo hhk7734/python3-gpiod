@@ -1,6 +1,6 @@
-python3-gpiod (1.1.x) UNRELEASED; urgency=medium
+python3-gpiod (1.1.0) unstable; urgency=medium
 
-  * gpiod: start v1.1
+  * libgpiod: API: start certain enums from 1
 
  -- Hyeonki Hong <hhk7734@gmail.com>  Wed, 15 Apr 2020 15:40:56 +0900
 

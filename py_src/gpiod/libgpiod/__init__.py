@@ -76,6 +76,10 @@ class timespec(Structure):
     pass
 
 
+class line_fd_handle(Structure):
+    pass
+
+
 class gpiod_chip(Structure):
     pass
 
@@ -101,6 +105,11 @@ timespec._fields_ = [
     ("tv_nsec", c_long),
 ]
 
+line_fd_handle._fields_ = [
+    ("fd", c_int),
+    ("refcount", c_int),
+]
+
 gpiod_chip._fields_ = [
     ("lines", POINTER(POINTER(gpiod_line))),
     ("num_lines", c_uint),
@@ -111,23 +120,42 @@ gpiod_chip._fields_ = [
     ("label", c_char * 32),
 ]
 
-gpiod_line._fields_ = [
-    ("offset", c_uint),
-    ("direction", c_int),
-    ("active_state", c_int),
-    ("used", c_bool),
-    ("open_source", c_bool),
-    ("open_drain", c_bool),
+if __version__ < (1, 0, 1):
+    gpiod_line._fields_ = [
+        ("offset", c_uint),
+        ("direction", c_int),
+        ("active_state", c_int),
+        ("used", c_bool),
+        ("open_source", c_bool),
+        ("open_drain", c_bool),
 
-    ("state", c_int),
-    ("up_to_date", c_bool),
+        ("state", c_int),
+        ("up_to_date", c_bool),
 
-    ("chip", POINTER(gpiod_chip)),
-    ("fd", c_int),
+        ("chip", POINTER(gpiod_chip)),
+        ("fd", c_int),
 
-    ("name", c_char * 32),
-    ("consumer", c_char * 32),
-]
+        ("name", c_char * 32),
+        ("consumer", c_char * 32),
+    ]
+else:
+    gpiod_line._fields_ = [
+        ("offset", c_uint),
+        ("direction", c_int),
+        ("active_state", c_int),
+        ("used", c_bool),
+        ("open_source", c_bool),
+        ("open_drain", c_bool),
+
+        ("state", c_int),
+        ("up_to_date", c_bool),
+
+        ("chip", POINTER(gpiod_chip)),
+        ("fd_handle", POINTER(line_fd_handle)),
+
+        ("name", c_char * 32),
+        ("consumer", c_char * 32),
+    ]
 
 gpiod_line_bulk._fields_ = [
     ("lines", POINTER(gpiod_line) * GPIOD_LINE_BULK_MAX_LINES),
@@ -234,5 +262,11 @@ gpiod_line_event_read = wrap_libgpiod_func(
 gpiod_line_event_wait_bulk = wrap_libgpiod_func(
     "gpiod_line_event_wait_bulk",
     [POINTER(gpiod_line_bulk), POINTER(timespec), POINTER(gpiod_line_bulk), ],
+    c_int
+)
+
+gpiod_line_event_get_fd = wrap_libgpiod_func(
+    "gpiod_line_event_get_fd",
+    [POINTER(gpiod_line), ],
     c_int
 )

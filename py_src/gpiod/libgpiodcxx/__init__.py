@@ -27,7 +27,7 @@ from ctypes import POINTER, pointer, \
     c_int, \
     get_errno
 from datetime import timedelta, datetime
-from errno import ENOENT, EPERM
+from errno import ENOENT
 from os import strerror
 from typing import List
 
@@ -416,12 +416,15 @@ class line:
     def event_get_fd(self) -> int:
         self._throw_if_null()
 
-        if self._m_line[0].state != libgpiod._LINE_REQUESTED_EVENTS:
-            raise OSError(EPERM,
-                          strerror(EPERM),
+        ret = libgpiod.gpiod_line_event_get_fd(self._m_line)
+
+        if ret < 0:
+            errno = get_errno()
+            raise OSError(errno,
+                          strerror(errno),
                           "unable to get the line event file descriptor")
 
-        return self._m_line[0].fd
+        return ret
 
     def get_chip(self) -> chip:
         return self._m_chip

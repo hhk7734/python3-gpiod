@@ -1,3 +1,9 @@
+python3-gpiod (1.1.2) unstable; urgency=medium
+
+  * pypi: version up due to pypi version problem
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 16 Apr 2020 20:55:27 +0900
+
 python3-gpiod (1.1.1) unstable; urgency=medium
 
   * libgpiodcxx: fix issue where line_bulk.get_values does not return result

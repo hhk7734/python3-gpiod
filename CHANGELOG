@@ -1,3 +1,9 @@
+python3-gpiod (1.2.x) UNRELEASED; urgency=medium
+
+  * gpiod: start v1.2
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 16 Apr 2020 21:05:58 +0900
+
 python3-gpiod (1.1.2) unstable; urgency=medium
 
   * pypi: version up due to pypi version problem

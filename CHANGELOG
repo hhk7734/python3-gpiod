@@ -1,3 +1,9 @@
+python3-gpiod (1.1.1) unstable; urgency=medium
+
+  * libgpiodcxx: fix issue where line_bulk.get_values does not return result
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 16 Apr 2020 20:44:47 +0900
+
 python3-gpiod (1.1.0) unstable; urgency=medium
 
   * libgpiod: API: start certain enums from 1

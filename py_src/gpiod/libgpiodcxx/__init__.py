@@ -536,6 +536,8 @@ class line_bulk:
         for it in self._m_bulk:
             values.append(it.get_value())
 
+        return values
+
     def set_values(self, values: List[int]):
         self._throw_if_empty()
 

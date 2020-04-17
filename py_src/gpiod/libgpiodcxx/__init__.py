@@ -88,6 +88,18 @@ class shared_chip:
 class chip:
     def __init__(self, device=None, how: int = chip.OPEN_LOOKUP,
                  chip_p: POINTER(libgpiod.gpiod_chip) = None):
+        '''
+        @brief Constructor. Creates an empty GPIO chip object or opens the chip
+                using chip.open.
+
+        @param device: String describing the GPIO chip.
+        @param how:    Indicates how the chip should be opened.
+
+        Usage:
+            c = chip()
+            c = chip("gpiochip0")
+            c = chip("/dev/gpiochip0", chip.OPEN_BY_PATH)
+        '''
         if(bool(chip_p)):
             self._m_chip = chip_p
             return
@@ -97,9 +109,28 @@ class chip:
             self.open(device, how)
 
     def __del__(self):
+        '''
+        @brief Destructor
+
+        Usage:
+            del chip
+        '''
         pass
 
     def open(self, device, how: int = chip.OPEN_LOOKUP):
+        '''
+        @brief Open a GPIO chip.
+
+        @param device: String or int describing the GPIO chip.
+        @param how:    Indicates how the chip should be opened.
+
+        If the object already holds a reference to an open chip, it will be
+        closed and the reference reset.
+
+        Usage:
+            chip.open("/dev/gpiochip0")
+            chip.open(0, chip.OPEN_BY_NUMBER)
+        '''
         if(how == chip.OPEN_BY_NUMBER):
             device = int(device)
         else:
@@ -117,28 +148,68 @@ class chip:
         self._m_chip = shared_chip(chip_p)
 
     def reset(self):
+        '''
+        @brief Reset the internal smart pointer owned by this object.
+
+        Usage:
+            chip.reset()
+        '''
         # Act like shared_ptr::reset()
         self._m_chip = shared_chip()
 
     @property
     def name(self) -> str:
+        '''
+        @brief Return the name of the chip held by this object.
+
+        @return Name of the GPIO chip.
+
+        Usage:
+            print(chip.name)
+        '''
         self._throw_if_noref()
 
         return self._m_chip.get()[0].name.decode()
 
     @property
     def label(self) -> str:
+        '''
+        @brief Return the label of the chip held by this object.
+
+        @return Label of the GPIO chip.
+
+        Usage:
+            print(chip.label)
+        '''
         self._throw_if_noref()
 
         return self._m_chip.get()[0].label.decode()
 
     @property
     def num_lines(self) -> int:
+        '''
+        @brief Return the number of lines exposed by this chip.
+
+        @return Number of lines.
+
+        Usage:
+            print(chip.num_lines)
+        '''
         self._throw_if_noref()
 
         return self._m_chip.get()[0].num_lines
 
     def get_line(self, offset: int) -> line:
+        '''
+        @brief Get the line exposed by this chip at given offset.
+
+        @param offset: Offset of the line.
+
+        @return Line object
+
+        Usage:
+            l = chip.get_line(0)
+        '''
         self._throw_if_noref()
 
         if offset >= self.num_lines or offset < 0:
@@ -155,6 +226,16 @@ class chip:
         return line(line_p, chip(chip_p=self._m_chip))
 
     def find_line(self, name: str) -> line:
+        '''
+        @brief Get the line exposed by this chip by name.
+
+        @param name: Line name.
+
+        @return Line object.
+
+        Usage:
+            l = chip.find_line("PIN_0")
+        '''
         self._throw_if_noref()
 
         line_p = libgpiod.gpiod_chip_find_line(
@@ -170,6 +251,16 @@ class chip:
             if bool(line_p) else line()
 
     def get_lines(self, offsets: List[int]) -> line_bulk:
+        '''
+        @brief Get a set of lines exposed by this chip at given offsets.
+
+        @param offsets: List of line offsets.
+
+        @return Set of lines held by a line_bulk object.
+
+        Usage:
+            lb = chip.get_lines([0, 1, 2])
+        '''
         lines = line_bulk()
 
         for it in offsets:
@@ -178,6 +269,14 @@ class chip:
         return lines
 
     def get_all_lines(self) -> line_bulk:
+        '''
+        @brief Get all lines exposed by this chip.
+
+        @return All lines exposed by this chip held by a line_bulk object.
+
+        Usage:
+            lb = chip.get_all_lines()
+        '''
         lines = line_bulk()
 
         for i in range(self.num_lines):
@@ -186,6 +285,16 @@ class chip:
         return lines
 
     def find_lines(self, names: List[str]) -> line_bulk:
+        '''
+        @brief Get a set of lines exposed by this chip by their names.
+
+        @param names: List of line names.
+
+        @return Set of lines held by a line_bulk object.
+
+        Usage:
+            lb = chip.find_lines(["PIN_0", "PIN_1", "PIN_2"])
+        '''
         lines = line_bulk()
 
         for it in names:
@@ -199,12 +308,41 @@ class chip:
         return lines
 
     def __eq__(self, other: chip) -> bool:
+        '''
+        @brief Equality operator.
+
+        @param other: Right-hand side of the equation.
+
+        @return True if rhs references the same chip. False otherwise.
+
+        Usage:
+            print(chip1 == chip2)
+        '''
         return self._m_chip.get() == other._m_chip.get()
 
     def __ne__(self, other: chip) -> bool:
+        '''
+        @brief Inequality operator.
+
+        @param other: Right-hand side of the equation.
+
+        @return False if rhs references the same chip. True otherwise.
+
+        Usage:
+            print(chip1 != chip2)
+        '''
         return self._m_chip.get() != other._m_chip.get()
 
     def __bool__(self) -> bool:
+        '''
+        @brief Check if this object holds a reference to a GPIO chip.
+
+        @return True if this object references a GPIO chip, false otherwise.
+
+        Usage:
+            print(bool(chip))
+            print(not chip)
+        '''
         return bool(self._m_chip.get())
 
     OPEN_LOOKUP = 1

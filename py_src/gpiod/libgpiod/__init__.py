@@ -26,7 +26,20 @@ from ctypes import CDLL, \
     POINTER, pointer, \
     Structure
 
-libgpiod = CDLL("libgpiod.so", use_errno=True)
+so_candidate = ["libgpiod.so", "libgpiod.so.1", ]
+libgpiod = None
+
+for so in so_candidate:
+    try:
+        libgpiod = CDLL(so, use_errno=True)
+        break
+    except OSError:
+        pass
+    except BaseException as e:
+        raise e
+
+if libgpiod is None:
+    raise FileNotFoundError("Failed to find any of {}".format(so_candidate))
 
 
 def wrap_libgpiod_func(name: str, argtypes: list, restype):

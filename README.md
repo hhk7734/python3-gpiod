@@ -22,9 +22,22 @@ python3 -m pip install -U --user pip gpiod
 ```python
 >>> import gpiod
 >>> help(gpiod)
->>> help(gpiod.libgpiodcxx)
->>> help(gpiod.libgpiodcxx.chip)
->>> help(gpiod.libgpiodcxx.chip.get_line)
+>>> help(gpiod.chip)
+>>> help(gpiod.line)
+>>> help(gpiod.chip.open)
+
+open(self, device, how:int=1)
+    @brief Open a GPIO chip.
+
+    @param device: String or int describing the GPIO chip.
+    @param how:    Indicates how the chip should be opened.
+
+    If the object already holds a reference to an open chip, it will be
+    closed and the reference reset.
+
+    Usage:
+        chip.open("/dev/gpiochip0")
+        chip.open(0, chip.OPEN_BY_NUMBER)
 ```
 
 ## Test
@@ -73,6 +86,8 @@ while True:
     led.set_value(1)
     time.sleep(0.1)
 ```
+
+### C++
 
 ```c++
 #include <chrono>

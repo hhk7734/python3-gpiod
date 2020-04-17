@@ -1,6 +1,7 @@
-python3-gpiod (1.2.x) UNRELEASED; urgency=medium
+python3-gpiod (1.2.0) unstable; urgency=medium
 
-  * gpiod: start v1.2
+  * libgpiodcxx: document chip class
+  * libgpiod: fix issue that fail to load libgpiod.so
 
  -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 16 Apr 2020 21:05:58 +0900
 

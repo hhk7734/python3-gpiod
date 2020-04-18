@@ -397,32 +397,77 @@ class line:
     def __init__(self,
                  line_p: POINTER(libgpiod.gpiod_line) = None,
                  owner: chip = chip()):
+        '''
+        @brief Constructor. Creates an empty line object.
+
+        Usage:
+            l = line()
+        '''
         self._m_line = line_p
         self._m_chip = owner
 
     def __del__(self):
+        '''
+        @brief Destructor
+
+        Usage:
+            del line
+        '''
         pass
 
     @property
     def offset(self) -> int:
+        '''
+        @brief Get the offset of this line.
+
+        @return Offet of this line.
+
+        Usage:
+            print(line.offset)
+        '''
         self._throw_if_null()
 
         return self._m_line[0].offset
 
     @property
     def name(self) -> str:
+        '''
+        @brief Get the name of this line (if any).
+
+        @return Name of this line or an empty string if it is unnamed.
+
+        Usage:
+            print(line.name)
+        '''
         self._throw_if_null()
 
         return self._m_line[0].name.decode()
 
     @property
     def consumer(self) -> str:
+        '''
+        @brief Get the consumer of this line (if any).
+
+        @return Name of the consumer of this line or an empty string if it
+                is unused.
+
+        Usage:
+            print(line.consumer)
+        '''
         self._throw_if_null()
 
         return self._m_line[0].consumer.decode()
 
     @property
     def direction(self) -> int:
+        '''
+        @brief Get current direction of this line.
+
+        @return Current direction setting.
+
+        Usage:
+            print(line.direction == line.DIRECTION_INPUT)
+        '''
         self._throw_if_null()
 
         return self.DIRECTION_INPUT \
@@ -432,6 +477,14 @@ class line:
 
     @property
     def active_state(self) -> int:
+        '''
+        @brief Get current active state of this line.
+
+        @return Current active state setting.
+
+        Usage:
+            print(line.active_state == line.ACTIVE_HIGH)
+        '''
         self._throw_if_null()
 
         return self.ACTIVE_HIGH \
@@ -441,23 +494,62 @@ class line:
 
     @property
     def is_used(self) -> bool:
+        '''
+        @brief Check if this line is used by the kernel or other user space
+               process.
+
+        @return True if this line is in use, false otherwise.
+
+        Usage:
+            print(line.is_used)
+        '''
         self._throw_if_null()
 
         return self._m_line[0].used
 
     @property
     def is_open_drain(self) -> bool:
+        '''
+        @brief Check if this line represents an open-drain GPIO.
+
+        @return True if the line is an open-drain GPIO, false otherwise.
+
+        Usage:
+            print(line.is_open_drain)
+        '''
         self._throw_if_null()
 
         return self._m_line[0].open_drain
 
     @property
     def is_open_source(self) -> bool:
+        '''
+        @brief Check if this line represents an open-source GPIO.
+
+        @return True if the line is an open-source GPIO, false otherwise.
+
+        Usage:
+            print(line.is_open_source)
+        '''
         self._throw_if_null()
 
         return self._m_line[0].open_source
 
     def request(self, config: line_request, default_val: int = 0):
+        '''
+        @brief Request this line.
+
+        @param config:      Request config (see gpiod.line_request).
+        @param default_val: Default value - only matters for OUTPUT direction.
+
+        Usage:
+            config = line_request()
+            config.consumer = "Application"
+            config.request_type = line_request.DIRECTION_OUTPUT
+
+            # line.request(config)
+            line.request(config, 1)
+        '''
         self._throw_if_null()
 
         conf = libgpiod.gpiod_line_request_config()
@@ -474,18 +566,40 @@ class line:
                           "error requesting GPIO line")
 
     def release(self):
+        '''
+        @brief Release the line if it was previously requested.
+
+        Usage:
+            line.release()
+        '''
         self._throw_if_null()
 
         libgpiod.gpiod_line_release(self._m_line)
 
     @property
     def is_requested(self) -> bool:
+        '''
+        @brief Check if this user has ownership of this line.
+
+        @return True if the user has ownership of this line, false otherwise.
+
+        Usage:
+            print(line.is_requested)
+        '''
         self._throw_if_null()
 
         return self._m_line[0].state == libgpiod._LINE_REQUESTED_VALUES \
             or self._m_line[0].state == libgpiod._LINE_REQUESTED_EVENTS
 
     def get_value(self) -> int:
+        '''
+        @brief Read the line value.
+
+        @return Current value (0 or 1).
+
+        Usage:
+            val = line.get_value()
+        '''
         self._throw_if_null()
 
         rv = libgpiod.gpiod_line_get_value(self._m_line)
@@ -498,6 +612,14 @@ class line:
         return rv
 
     def set_value(self, val: int):
+        '''
+        @brief Set the value of this line.
+
+        @param val: New value (0 or 1).
+
+        Usage:
+            line.set_value(1)
+        '''
         self._throw_if_null()
 
         rv = libgpiod.gpiod_line_set_value(self._m_line, val)
@@ -508,6 +630,20 @@ class line:
                           "error setting GPIO line value")
 
     def event_wait(self, timeout: timedelta) -> bool:
+        '''
+        @brief Wait for an event on this line.
+
+        @param timeout: Time to wait before returning if no event occurred.
+
+        @return True if an event occurred and can be read, false if the wait
+                timed out.
+
+        Usage:
+            if line.event_wait(timedelta(seconds=10)):
+                print("An event occurred")
+            else:
+                print("Timeout")
+        '''
         self._throw_if_null()
 
         ts = libgpiod.timespec()
@@ -524,6 +660,19 @@ class line:
         return bool(rv)
 
     def event_read(self) -> line_event:
+        '''
+        @brief Read a line event.
+
+        @return Line event object.
+
+        Usage:
+            if line.event_wait(timedelta(seconds=10)):
+                event = line.event_read()
+                print(event.event_type == line_event.RISING_EDGE)
+                print(event.timestamp)
+            else:
+                print("Timeout")
+        '''
         self._throw_if_null()
 
         event_buf = libgpiod.gpiod_line_event()
@@ -552,6 +701,14 @@ class line:
         return event
 
     def event_get_fd(self) -> int:
+        '''
+        @brief Get the event file descriptor associated with this line.
+
+        @return File descriptor number
+
+        Usage:
+            fd = line.event_get_fd()
+        '''
         self._throw_if_null()
 
         ret = libgpiod.gpiod_line_event_get_fd(self._m_line)
@@ -565,19 +722,66 @@ class line:
         return ret
 
     def get_chip(self) -> chip:
+        '''
+        @brief Get the reference to the parent chip.
+
+        @return Reference to the parent chip object.
+
+        Usage:
+            c = line.get_chip()
+        '''
         return self._m_chip
 
     def reset(self):
+        '''
+        @brief Reset the state of this object.
+
+        This is useful when the user needs to e.g. keep the line_event object
+        but wants to drop the reference to the GPIO chip indirectly held by
+        the line being the source of the event.
+
+        Usage:
+            line.reset()
+        '''
         self._m_line = None
         self._m_chip.reset()
 
     def __eq__(self, other: line) -> bool:
+        '''
+        @brief Check if two line objects reference the same GPIO line.
+
+        @param other: Right-hand side of the equation.
+
+        @return True if both objects reference the same line, fale otherwise.
+
+        Usage:
+            print(line1 == line2)
+        '''
         return self._m_line == other._m_line
 
     def __ne__(self, other: line) -> bool:
+        '''
+        @brief Check if two line objects reference different GPIO lines.
+
+        @param other: Right-hand side of the equation.
+
+        @return False if both objects reference the same line, true otherwise.
+
+        Usage:
+            print(line1 != line2)
+        '''
         return self._m_line != other._m_line
 
     def __bool__(self) -> bool:
+        '''
+        @brief Check if this object holds a reference to any GPIO line.
+
+        @return True if this object references a GPIO line, false otherwise.
+
+        Usage:
+            print(bool(line))
+            print(not line)
+        '''
         return bool(self._m_line)
 
     DIRECTION_INPUT = 1

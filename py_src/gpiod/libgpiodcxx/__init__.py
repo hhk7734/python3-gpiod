@@ -307,31 +307,31 @@ class chip:
 
         return lines
 
-    def __eq__(self, other: chip) -> bool:
+    def __eq__(self, rhs: chip) -> bool:
         '''
         @brief Equality operator.
 
-        @param other: Right-hand side of the equation.
+        @param rhs: Right-hand side of the equation.
 
         @return True if rhs references the same chip. False otherwise.
 
         Usage:
             print(chip1 == chip2)
         '''
-        return self._m_chip.get() == other._m_chip.get()
+        return self._m_chip.get() == rhs._m_chip.get()
 
-    def __ne__(self, other: chip) -> bool:
+    def __ne__(self, rhs: chip) -> bool:
         '''
         @brief Inequality operator.
 
-        @param other: Right-hand side of the equation.
+        @param rhs: Right-hand side of the equation.
 
         @return False if rhs references the same chip. True otherwise.
 
         Usage:
             print(chip1 != chip2)
         '''
-        return self._m_chip.get() != other._m_chip.get()
+        return self._m_chip.get() != rhs._m_chip.get()
 
     def __bool__(self) -> bool:
         '''
@@ -746,31 +746,31 @@ class line:
         self._m_line = None
         self._m_chip.reset()
 
-    def __eq__(self, other: line) -> bool:
+    def __eq__(self, rhs: line) -> bool:
         '''
         @brief Check if two line objects reference the same GPIO line.
 
-        @param other: Right-hand side of the equation.
+        @param rhs: Right-hand side of the equation.
 
         @return True if both objects reference the same line, fale otherwise.
 
         Usage:
             print(line1 == line2)
         '''
-        return self._m_line == other._m_line
+        return self._m_line == rhs._m_line
 
-    def __ne__(self, other: line) -> bool:
+    def __ne__(self, rhs: line) -> bool:
         '''
         @brief Check if two line objects reference different GPIO lines.
 
-        @param other: Right-hand side of the equation.
+        @param rhs: Right-hand side of the equation.
 
         @return False if both objects reference the same line, true otherwise.
 
         Usage:
             print(line1 != line2)
         '''
-        return self._m_line != other._m_line
+        return self._m_line != rhs._m_line
 
     def __bool__(self) -> bool:
         '''

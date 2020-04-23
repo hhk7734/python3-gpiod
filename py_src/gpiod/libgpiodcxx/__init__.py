@@ -824,10 +824,8 @@ class line_event:
 
 class line_bulk:
     # pylint: disable=function-redefined
-    def __init__(self, lines: List[line] = []):
-        # If assigned lines by reference, when using line_bulk(), Changed lists
-        # can be assigned, not empty lists.
-        self._m_bulk = lines.copy()
+    def __init__(self, lines: List[line] = None):
+        self._m_bulk = lines if lines is not None else []
 
     def __del__(self):
         pass

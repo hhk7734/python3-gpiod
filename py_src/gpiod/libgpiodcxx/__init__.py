@@ -603,10 +603,7 @@ class line:
         """
         self._throw_if_null()
 
-        return (
-            self._m_line[0].state == libgpiod._LINE_REQUESTED_VALUES
-            or self._m_line[0].state == libgpiod._LINE_REQUESTED_EVENTS
-        )
+        return libgpiod.gpiod_line_is_requested(self._m_line)
 
     def get_value(self) -> int:
         """
@@ -957,5 +954,6 @@ class line_bulk:
     def _to_line_bulk(self, bulk: POINTER(libgpiod.gpiod_line_bulk)):
         bulk[0].num_lines = 0
         for it in self._m_bulk:
+            # pylint: disable=protected-access
             bulk[0].lines[bulk[0].num_lines] = it._m_line
             bulk[0].num_lines += 1

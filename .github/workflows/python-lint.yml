@@ -1,0 +1,31 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Lint check
+
+on: [pull_request, push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Checkout Current Repo
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+      - name: Pip install pylint, black, & Sphinx
+        run: |
+          pip install --force-reinstall pylint black
+      - name: Library version
+        run: git describe --dirty --always --tags
+      - name: Format check with black
+        run: |
+          black --check -l 80 .
+      - name: Lint with PyLint
+        run: |
+          pylint py_src

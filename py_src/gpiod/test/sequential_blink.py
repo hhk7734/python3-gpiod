@@ -1,19 +1,21 @@
-import gpiod
 import sys
 import time
+import gpiod
 
 try:
     if len(sys.argv) > 2:
         LED_CHIP = sys.argv[1]
         LED_LINE_OFFSETS = []
         for i in range(len(sys.argv) - 2):
-            LED_LINE_OFFSETS.append(int(sys.argv[i+2]))
+            LED_LINE_OFFSETS.append(int(sys.argv[i + 2]))
     else:
         raise Exception()
 except:
-    print('''Usage:
+    print(
+        """Usage:
     python3 -m gpiod.test.sequential_blink <chip> <line offset1> \\
-        [<line offset2> ...]''')
+        [<line offset2> ...]"""
+    )
     sys.exit()
 
 chip = gpiod.chip(LED_CHIP)

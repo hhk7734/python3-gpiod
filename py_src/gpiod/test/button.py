@@ -8,9 +8,9 @@ try:
         BUTTON_LINE_OFFSET = int(sys.argv[2])
         if len(sys.argv) > 3:
             edge = sys.argv[3]
-            if edge[0] == 'r':
+            if edge[0] == "r":
                 BUTTON_EDGE = gpiod.line_request.EVENT_RISING_EDGE
-            elif edge[0] == 'f':
+            elif edge[0] == "f":
                 BUTTON_EDGE = gpiod.line_request.EVENT_FALLING_EDGE
             else:
                 BUTTON_EDGE = gpiod.line_request.EVENT_BOTH_EDGES
@@ -20,8 +20,10 @@ try:
     else:
         raise Exception()
 except:
-    print('''Usage:
-    python3 -m gpiod.test.button <chip> <line offset> [rising|falling|both]''')
+    print(
+        """Usage:
+    python3 -m gpiod.test.button <chip> <line offset> [rising|falling|both]"""
+    )
     sys.exit()
 
 chip = gpiod.chip(BUTTON_CHIP)

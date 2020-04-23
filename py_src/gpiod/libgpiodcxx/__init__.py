@@ -1,4 +1,4 @@
-'''
+"""
 MIT License
 
 Copyright (c) 2020 Hyeonki Hong <hhk7734@gmail.com>
@@ -20,19 +20,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
-from .. import libgpiod
-
-from ctypes import POINTER, pointer, \
-    c_int, \
-    get_errno
+"""
+from ctypes import POINTER, pointer, c_int, get_errno
 from datetime import timedelta, datetime
 from errno import ENOENT
 from os import strerror
 from typing import List
 
+from .. import libgpiod
+
 
 class chip:
+    # pylint: disable=too-few-public-methods
     OPEN_LOOKUP = 1
     OPEN_BY_PATH = 2
     OPEN_BY_NAME = 3
@@ -41,18 +40,22 @@ class chip:
 
 
 class line:
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class line_bulk:
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class line_event:
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class line_request:
+    # pylint: disable=too-few-public-methods
     pass
 
 
@@ -66,12 +69,13 @@ open_funcs = {
 
 
 def chip_deleter(chip_p: POINTER(libgpiod.gpiod_chip)):
+    # pylint: disable=missing-function-docstring
     libgpiod.gpiod_chip_close(chip_p)
 
 
 class shared_chip:
-    def __init__(self,
-                 chip_p: POINTER(libgpiod.gpiod_chip) = None):
+    # pylint: disable=missing-function-docstring
+    def __init__(self, chip_p: POINTER(libgpiod.gpiod_chip) = None):
         self._chip_p = chip_p
 
     def get(self):
@@ -86,9 +90,14 @@ class shared_chip:
 
 
 class chip:
-    def __init__(self, device=None, how: int = chip.OPEN_LOOKUP,
-                 chip_p: POINTER(libgpiod.gpiod_chip) = None):
-        '''
+    # pylint: disable=function-redefined,
+    def __init__(
+        self,
+        device=None,
+        how: int = chip.OPEN_LOOKUP,
+        chip_p: POINTER(libgpiod.gpiod_chip) = None,
+    ):
+        """
         @brief Constructor. Creates an empty GPIO chip object or opens the chip
                 using chip.open.
 
@@ -99,26 +108,25 @@ class chip:
             c = chip()
             c = chip("gpiochip0")
             c = chip("/dev/gpiochip0", chip.OPEN_BY_PATH)
-        '''
-        if(bool(chip_p)):
+        """
+        if bool(chip_p):
             self._m_chip = chip_p
             return
 
         self._m_chip = shared_chip()
-        if(device is not None):
+        if device is not None:
             self.open(device, how)
 
     def __del__(self):
-        '''
+        """
         @brief Destructor
 
         Usage:
             del chip
-        '''
-        pass
+        """
 
     def open(self, device, how: int = chip.OPEN_LOOKUP):
-        '''
+        """
         @brief Open a GPIO chip.
 
         @param device: String or int describing the GPIO chip.
@@ -130,8 +138,8 @@ class chip:
         Usage:
             chip.open("/dev/gpiochip0")
             chip.open(0, chip.OPEN_BY_NUMBER)
-        '''
-        if(how == chip.OPEN_BY_NUMBER):
+        """
+        if how == chip.OPEN_BY_NUMBER:
             device = int(device)
         else:
             device = str(device).encode()
@@ -141,66 +149,68 @@ class chip:
         chip_p = func(device)
         if not bool(chip_p):
             errno = get_errno()
-            raise OSError(errno,
-                          strerror(errno),
-                          "cannot open GPIO device {}".format(device))
+            raise OSError(
+                errno,
+                strerror(errno),
+                "cannot open GPIO device {}".format(device),
+            )
 
         self._m_chip = shared_chip(chip_p)
 
     def reset(self):
-        '''
+        """
         @brief Reset the internal smart pointer owned by this object.
 
         Usage:
             chip.reset()
-        '''
+        """
         # Act like shared_ptr::reset()
         self._m_chip = shared_chip()
 
     @property
     def name(self) -> str:
-        '''
+        """
         @brief Return the name of the chip held by this object.
 
         @return Name of the GPIO chip.
 
         Usage:
             print(chip.name)
-        '''
+        """
         self._throw_if_noref()
 
         return self._m_chip.get()[0].name.decode()
 
     @property
     def label(self) -> str:
-        '''
+        """
         @brief Return the label of the chip held by this object.
 
         @return Label of the GPIO chip.
 
         Usage:
             print(chip.label)
-        '''
+        """
         self._throw_if_noref()
 
         return self._m_chip.get()[0].label.decode()
 
     @property
     def num_lines(self) -> int:
-        '''
+        """
         @brief Return the number of lines exposed by this chip.
 
         @return Number of lines.
 
         Usage:
             print(chip.num_lines)
-        '''
+        """
         self._throw_if_noref()
 
         return self._m_chip.get()[0].num_lines
 
     def get_line(self, offset: int) -> line:
-        '''
+        """
         @brief Get the line exposed by this chip at given offset.
 
         @param offset: Offset of the line.
@@ -209,7 +219,7 @@ class chip:
 
         Usage:
             l = chip.get_line(0)
-        '''
+        """
         self._throw_if_noref()
 
         if offset >= self.num_lines or offset < 0:
@@ -218,15 +228,15 @@ class chip:
         line_p = libgpiod.gpiod_chip_get_line(self._m_chip.get(), offset)
         if not bool(line_p):
             errno = get_errno()
-            raise OSError(errno,
-                          strerror(errno),
-                          "error getting GPIO line from chip")
+            raise OSError(
+                errno, strerror(errno), "error getting GPIO line from chip"
+            )
 
         # Failed to deepcopy due to pointer of ctypes
         return line(line_p, chip(chip_p=self._m_chip))
 
     def find_line(self, name: str) -> line:
-        '''
+        """
         @brief Get the line exposed by this chip by name.
 
         @param name: Line name.
@@ -235,23 +245,25 @@ class chip:
 
         Usage:
             l = chip.find_line("PIN_0")
-        '''
+        """
         self._throw_if_noref()
 
         line_p = libgpiod.gpiod_chip_find_line(
-            self._m_chip.get(), name.encode())
+            self._m_chip.get(), name.encode()
+        )
         errno = get_errno()
         if not bool(line_p) and errno != ENOENT:
-            raise OSError(errno,
-                          strerror(errno),
-                          "error looking up GPIO line by name")
+            raise OSError(
+                errno, strerror(errno), "error looking up GPIO line by name"
+            )
 
         # Failed to deepcopy due to pointer of ctypes
-        return line(line_p, chip(chip_p=self._m_chip)) \
-            if bool(line_p) else line()
+        return (
+            line(line_p, chip(chip_p=self._m_chip)) if bool(line_p) else line()
+        )
 
     def get_lines(self, offsets: List[int]) -> line_bulk:
-        '''
+        """
         @brief Get a set of lines exposed by this chip at given offsets.
 
         @param offsets: List of line offsets.
@@ -260,7 +272,7 @@ class chip:
 
         Usage:
             lb = chip.get_lines([0, 1, 2])
-        '''
+        """
         lines = line_bulk()
 
         for it in offsets:
@@ -269,14 +281,14 @@ class chip:
         return lines
 
     def get_all_lines(self) -> line_bulk:
-        '''
+        """
         @brief Get all lines exposed by this chip.
 
         @return All lines exposed by this chip held by a line_bulk object.
 
         Usage:
             lb = chip.get_all_lines()
-        '''
+        """
         lines = line_bulk()
 
         for i in range(self.num_lines):
@@ -285,7 +297,7 @@ class chip:
         return lines
 
     def find_lines(self, names: List[str]) -> line_bulk:
-        '''
+        """
         @brief Get a set of lines exposed by this chip by their names.
 
         @param names: List of line names.
@@ -294,7 +306,7 @@ class chip:
 
         Usage:
             lb = chip.find_lines(["PIN_0", "PIN_1", "PIN_2"])
-        '''
+        """
         lines = line_bulk()
 
         for it in names:
@@ -308,7 +320,7 @@ class chip:
         return lines
 
     def __eq__(self, rhs: chip) -> bool:
-        '''
+        """
         @brief Equality operator.
 
         @param rhs: Right-hand side of the equation.
@@ -317,11 +329,11 @@ class chip:
 
         Usage:
             print(chip1 == chip2)
-        '''
+        """
         return self._m_chip.get() == rhs._m_chip.get()
 
     def __ne__(self, rhs: chip) -> bool:
-        '''
+        """
         @brief Inequality operator.
 
         @param rhs: Right-hand side of the equation.
@@ -330,11 +342,11 @@ class chip:
 
         Usage:
             print(chip1 != chip2)
-        '''
+        """
         return self._m_chip.get() != rhs._m_chip.get()
 
     def __bool__(self) -> bool:
-        '''
+        """
         @brief Check if this object holds a reference to a GPIO chip.
 
         @return True if this object references a GPIO chip, false otherwise.
@@ -342,7 +354,7 @@ class chip:
         Usage:
             print(bool(chip))
             print(not chip)
-        '''
+        """
         return bool(self._m_chip.get())
 
     OPEN_LOOKUP = 1
@@ -357,6 +369,8 @@ class chip:
 
 
 class line_request:
+    # pylint: disable=function-redefined
+    # pylint: disable=too-few-public-methods
     DIRECTION_AS_IS = 1
     DIRECTION_INPUT = 2
     DIRECTION_OUTPUT = 3
@@ -382,8 +396,7 @@ reqtype_mapping = {
         libgpiod.GPIOD_LINE_REQUEST_EVENT_FALLING_EDGE,
     line_request.EVENT_RISING_EDGE:
         libgpiod.GPIOD_LINE_REQUEST_EVENT_RISING_EDGE,
-    line_request.EVENT_BOTH_EDGES:
-        libgpiod.GPIOD_LINE_REQUEST_EVENT_BOTH_EDGES,
+    line_request.EVENT_BOTH_EDGES: libgpiod.GPIOD_LINE_REQUEST_EVENT_BOTH_EDGES,
 }
 
 reqflag_mapping = {
@@ -394,58 +407,58 @@ reqflag_mapping = {
 
 
 class line:
-    def __init__(self,
-                 line_p: POINTER(libgpiod.gpiod_line) = None,
-                 owner: chip = chip()):
-        '''
+    # pylint: disable=function-redefined
+    def __init__(
+        self, line_p: POINTER(libgpiod.gpiod_line) = None, owner: chip = chip()
+    ):
+        """
         @brief Constructor. Creates an empty line object.
 
         Usage:
             l = line()
-        '''
+        """
         self._m_line = line_p
         self._m_chip = owner
 
     def __del__(self):
-        '''
+        """
         @brief Destructor
 
         Usage:
             del line
-        '''
-        pass
+        """
 
     @property
     def offset(self) -> int:
-        '''
+        """
         @brief Get the offset of this line.
 
         @return Offet of this line.
 
         Usage:
             print(line.offset)
-        '''
+        """
         self._throw_if_null()
 
         return self._m_line[0].offset
 
     @property
     def name(self) -> str:
-        '''
+        """
         @brief Get the name of this line (if any).
 
         @return Name of this line or an empty string if it is unnamed.
 
         Usage:
             print(line.name)
-        '''
+        """
         self._throw_if_null()
 
         return self._m_line[0].name.decode()
 
     @property
     def consumer(self) -> str:
-        '''
+        """
         @brief Get the consumer of this line (if any).
 
         @return Name of the consumer of this line or an empty string if it
@@ -453,48 +466,51 @@ class line:
 
         Usage:
             print(line.consumer)
-        '''
+        """
         self._throw_if_null()
 
         return self._m_line[0].consumer.decode()
 
     @property
     def direction(self) -> int:
-        '''
+        """
         @brief Get current direction of this line.
 
         @return Current direction setting.
 
         Usage:
             print(line.direction == line.DIRECTION_INPUT)
-        '''
+        """
         self._throw_if_null()
 
-        return self.DIRECTION_INPUT \
-            if self._m_line[0].direction \
-            == libgpiod.GPIOD_LINE_DIRECTION_INPUT \
+        return (
+            self.DIRECTION_INPUT
+            if self._m_line[0].direction == libgpiod.GPIOD_LINE_DIRECTION_INPUT
             else self.DIRECTION_OUTPUT
+        )
 
     @property
     def active_state(self) -> int:
-        '''
+        """
         @brief Get current active state of this line.
 
         @return Current active state setting.
 
         Usage:
             print(line.active_state == line.ACTIVE_HIGH)
-        '''
+        """
         self._throw_if_null()
 
-        return self.ACTIVE_HIGH \
-            if self._m_line[0].active_state \
-            == libgpiod.GPIOD_LINE_ACTIVE_STATE_HIGH \
+        return (
+            self.ACTIVE_HIGH
+            if self._m_line[0].active_state
+            == libgpiod.GPIOD_LINE_ACTIVE_STATE_HIGH
             else self.ACTIVE_LOW
+        )
 
     @property
     def is_used(self) -> bool:
-        '''
+        """
         @brief Check if this line is used by the kernel or other user space
                process.
 
@@ -502,41 +518,41 @@ class line:
 
         Usage:
             print(line.is_used)
-        '''
+        """
         self._throw_if_null()
 
         return self._m_line[0].used
 
     @property
     def is_open_drain(self) -> bool:
-        '''
+        """
         @brief Check if this line represents an open-drain GPIO.
 
         @return True if the line is an open-drain GPIO, false otherwise.
 
         Usage:
             print(line.is_open_drain)
-        '''
+        """
         self._throw_if_null()
 
         return self._m_line[0].open_drain
 
     @property
     def is_open_source(self) -> bool:
-        '''
+        """
         @brief Check if this line represents an open-source GPIO.
 
         @return True if the line is an open-source GPIO, false otherwise.
 
         Usage:
             print(line.is_open_source)
-        '''
+        """
         self._throw_if_null()
 
         return self._m_line[0].open_source
 
     def request(self, config: line_request, default_val: int = 0):
-        '''
+        """
         @brief Request this line.
 
         @param config:      Request config (see gpiod.line_request).
@@ -549,7 +565,7 @@ class line:
 
             # line.request(config)
             line.request(config, 1)
-        '''
+        """
         self._throw_if_null()
 
         conf = libgpiod.gpiod_line_request_config()
@@ -558,79 +574,80 @@ class line:
         conf.flags = 0
 
         rv = libgpiod.gpiod_line_request(
-            self._m_line, pointer(conf), default_val)
+            self._m_line, pointer(conf), default_val
+        )
         if rv:
             errno = get_errno()
-            raise OSError(errno,
-                          strerror(errno),
-                          "error requesting GPIO line")
+            raise OSError(errno, strerror(errno), "error requesting GPIO line")
 
     def release(self):
-        '''
+        """
         @brief Release the line if it was previously requested.
 
         Usage:
             line.release()
-        '''
+        """
         self._throw_if_null()
 
         libgpiod.gpiod_line_release(self._m_line)
 
     @property
     def is_requested(self) -> bool:
-        '''
+        """
         @brief Check if this user has ownership of this line.
 
         @return True if the user has ownership of this line, false otherwise.
 
         Usage:
             print(line.is_requested)
-        '''
+        """
         self._throw_if_null()
 
-        return self._m_line[0].state == libgpiod._LINE_REQUESTED_VALUES \
+        return (
+            self._m_line[0].state == libgpiod._LINE_REQUESTED_VALUES
             or self._m_line[0].state == libgpiod._LINE_REQUESTED_EVENTS
+        )
 
     def get_value(self) -> int:
-        '''
+        """
         @brief Read the line value.
 
         @return Current value (0 or 1).
 
         Usage:
             val = line.get_value()
-        '''
+        """
         self._throw_if_null()
 
         rv = libgpiod.gpiod_line_get_value(self._m_line)
         if rv == -1:
             errno = get_errno()
-            raise OSError(errno,
-                          strerror(errno),
-                          "error reading GPIO line value")
+            raise OSError(
+                errno, strerror(errno), "error reading GPIO line value"
+            )
 
         return rv
 
     def set_value(self, val: int):
-        '''
+        """
         @brief Set the value of this line.
 
         @param val: New value (0 or 1).
 
         Usage:
             line.set_value(1)
-        '''
+        """
         self._throw_if_null()
 
         rv = libgpiod.gpiod_line_set_value(self._m_line, val)
         if rv:
             errno = get_errno()
-            raise OSError(errno,
-                          strerror(errno),
-                          "error setting GPIO line value")
+            raise OSError(
+                errno, strerror(errno), "error setting GPIO line value"
+            )
 
     def event_wait(self, timeout: timedelta) -> bool:
-        '''
+        """
         @brief Wait for an event on this line.
 
         @param timeout: Time to wait before returning if no event occurred.
@@ -643,7 +660,7 @@ class line:
                 print("An event occurred")
             else:
                 print("Timeout")
-        '''
+        """
         self._throw_if_null()
 
         ts = libgpiod.timespec()
@@ -653,14 +670,12 @@ class line:
         rv = libgpiod.gpiod_line_event_wait(self._m_line, pointer(ts))
         if rv < 0:
             errno = get_errno()
-            raise OSError(errno,
-                          strerror(errno),
-                          "error polling for events")
+            raise OSError(errno, strerror(errno), "error polling for events")
 
         return bool(rv)
 
     def event_read(self) -> line_event:
-        '''
+        """
         @brief Read a line event.
 
         @return Line event object.
@@ -672,7 +687,7 @@ class line:
                 print(event.timestamp)
             else:
                 print("Timeout")
-        '''
+        """
         self._throw_if_null()
 
         event_buf = libgpiod.gpiod_line_event()
@@ -681,59 +696,59 @@ class line:
         rv = libgpiod.gpiod_line_event_read(self._m_line, pointer(event_buf))
         if rv < 0:
             errno = get_errno()
-            raise OSError(errno,
-                          strerror(errno),
-                          "error reading line event")
+            raise OSError(errno, strerror(errno), "error reading line event")
 
         if event_buf.event_type == libgpiod.GPIOD_LINE_EVENT_RISING_EDGE:
             event.event_type = line_event.RISING_EDGE
         elif event_buf.event_type == libgpiod.GPIOD_LINE_EVENT_FALLING_EDGE:
             event.event_type = line_event.FALLING_EDGE
 
-        event.timestamp = datetime(year=1970, month=1, day=1) \
-            + timedelta(
+        event.timestamp = datetime(year=1970, month=1, day=1) + timedelta(
             days=event_buf.ts.tv_sec // 86400,
             seconds=event_buf.ts.tv_sec % 86400,
-            microseconds=event_buf.ts.tv_nsec // 1000)
+            microseconds=event_buf.ts.tv_nsec // 1000,
+        )
 
         event.source = self
 
         return event
 
     def event_get_fd(self) -> int:
-        '''
+        """
         @brief Get the event file descriptor associated with this line.
 
         @return File descriptor number
 
         Usage:
             fd = line.event_get_fd()
-        '''
+        """
         self._throw_if_null()
 
         ret = libgpiod.gpiod_line_event_get_fd(self._m_line)
 
         if ret < 0:
             errno = get_errno()
-            raise OSError(errno,
-                          strerror(errno),
-                          "unable to get the line event file descriptor")
+            raise OSError(
+                errno,
+                strerror(errno),
+                "unable to get the line event file descriptor",
+            )
 
         return ret
 
     def get_chip(self) -> chip:
-        '''
+        """
         @brief Get the reference to the parent chip.
 
         @return Reference to the parent chip object.
 
         Usage:
             c = line.get_chip()
-        '''
+        """
         return self._m_chip
 
     def reset(self):
-        '''
+        """
         @brief Reset the state of this object.
 
         This is useful when the user needs to e.g. keep the line_event object
@@ -742,12 +757,12 @@ class line:
 
         Usage:
             line.reset()
-        '''
+        """
         self._m_line = None
         self._m_chip.reset()
 
     def __eq__(self, rhs: line) -> bool:
-        '''
+        """
         @brief Check if two line objects reference the same GPIO line.
 
         @param rhs: Right-hand side of the equation.
@@ -756,11 +771,11 @@ class line:
 
         Usage:
             print(line1 == line2)
-        '''
+        """
         return self._m_line == rhs._m_line
 
     def __ne__(self, rhs: line) -> bool:
-        '''
+        """
         @brief Check if two line objects reference different GPIO lines.
 
         @param rhs: Right-hand side of the equation.
@@ -769,11 +784,11 @@ class line:
 
         Usage:
             print(line1 != line2)
-        '''
+        """
         return self._m_line != rhs._m_line
 
     def __bool__(self) -> bool:
-        '''
+        """
         @brief Check if this object holds a reference to any GPIO line.
 
         @return True if this object references a GPIO line, false otherwise.
@@ -781,7 +796,7 @@ class line:
         Usage:
             print(bool(line))
             print(not line)
-        '''
+        """
         return bool(self._m_line)
 
     DIRECTION_INPUT = 1
@@ -796,6 +811,8 @@ class line:
 
 
 class line_event:
+    # pylint: disable=function-redefined
+    # pylint: disable=too-few-public-methods
     RISING_EDGE = 1
     FALLING_EDGE = 2
 
@@ -806,6 +823,7 @@ class line_event:
 
 
 class line_bulk:
+    # pylint: disable=function-redefined
     def __init__(self, lines: List[line] = []):
         # If assigned lines by reference, when using line_bulk(), Changed lists
         # can be assigned, not empty lists.
@@ -821,10 +839,13 @@ class line_bulk:
         if len(self._m_bulk) >= self.MAX_LINES:
             raise IndexError("maximum number of lines reached")
 
-        if len(self._m_bulk) >= 1 and \
-                self._m_bulk[0].get_chip() != new_line.get_chip():
+        if (
+            len(self._m_bulk) >= 1
+            and self._m_bulk[0].get_chip() != new_line.get_chip()
+        ):
             raise ValueError(
-                "line_bulk cannot hold GPIO lines from different chips")
+                "line_bulk cannot hold GPIO lines from different chips"
+            )
 
         self._m_bulk.append(new_line)
 
@@ -848,22 +869,24 @@ class line_bulk:
     def clear(self):
         self._m_bulk = []
 
-    def request(self, config: line_request, default_vals: List[int] = []):
+    def request(self, config: line_request, default_vals: List[int] = None):
         self._throw_if_empty()
 
-        if not len(default_vals):
+        if default_vals is None:
             default_vals = [0] * self.size
 
         if self.size != len(default_vals):
-            raise ValueError("the number of default values must correspond "
-                             "with the number of lines")
+            raise ValueError(
+                "the number of default values must correspond "
+                "with the number of lines"
+            )
 
         try:
             for i in range(self.size):
                 self._m_bulk[i].request(config, default_vals[i])
-        except OSError as e:
+        except OSError as error:
             self.release()
-            raise e
+            raise error
 
     def release(self):
         self._throw_if_empty()
@@ -884,8 +907,10 @@ class line_bulk:
         self._throw_if_empty()
 
         if self.size != len(values):
-            raise ValueError("the size of values array must correspond with "
-                             "the number of lines")
+            raise ValueError(
+                "the size of values array must correspond with "
+                "the number of lines"
+            )
 
         for i in range(self.size):
             self._m_bulk[i].set_value(values[i])
@@ -905,18 +930,17 @@ class line_bulk:
         ts.tv_sec = (timeout.days * 86400) + timeout.seconds
         ts.tv_nsec = timeout.microseconds * 1000
 
-        rv = libgpiod.gpiod_line_event_wait_bulk(pointer(bulk),
-                                                 pointer(ts),
-                                                 pointer(event_bulk))
+        rv = libgpiod.gpiod_line_event_wait_bulk(
+            pointer(bulk), pointer(ts), pointer(event_bulk)
+        )
         if rv < 0:
             errno = get_errno()
-            raise OSError(errno,
-                          strerror(errno),
-                          "error polling for events")
+            raise OSError(errno, strerror(errno), "error polling for events")
         elif rv > 0:
             for i in range(event_bulk.num_lines):
                 ret.append(
-                    line(event_bulk.lines[i], self._m_bulk[i].get_chip()))
+                    line(event_bulk.lines[i], self._m_bulk[i].get_chip())
+                )
 
         return ret
 

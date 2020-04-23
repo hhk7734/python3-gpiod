@@ -36,6 +36,7 @@ from ctypes import (
 
 SO_CANDIDATE = (
     "libgpiod.so",
+    "libgpiod.so.2",
     "libgpiod.so.1",
 )
 libgpiod = None

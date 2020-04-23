@@ -271,6 +271,21 @@ gpiod_line_release = wrap_libgpiod_func(
     "gpiod_line_release", [POINTER(gpiod_line), ], None
 )
 
+
+def gpiod_line_is_requested(line: POINTER(gpiod_line)) -> bool:
+    """
+    @brief Check if the calling user has ownership of this line.
+
+    @param line: GPIO line object.
+
+    @return True if given line was requested, false otherwise.
+    """
+    return (
+        line[0].state == _LINE_REQUESTED_VALUES
+        or line[0].state == _LINE_REQUESTED_EVENTS
+    )
+
+
 gpiod_line_get_value = wrap_libgpiod_func(
     "gpiod_line_get_value", [POINTER(gpiod_line), ], c_int
 )

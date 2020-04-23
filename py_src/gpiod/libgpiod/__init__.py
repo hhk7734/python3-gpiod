@@ -228,47 +228,47 @@ class gpiod_line_event(Structure):
 
 
 gpiod_chip_open = wrap_libgpiod_func(
-    "gpiod_chip_open", [c_char_p, ], POINTER(gpiod_chip)
+    "gpiod_chip_open", [c_char_p,], POINTER(gpiod_chip)
 )
 
 gpiod_chip_open_by_name = wrap_libgpiod_func(
-    "gpiod_chip_open_by_name", [c_char_p, ], POINTER(gpiod_chip)
+    "gpiod_chip_open_by_name", [c_char_p,], POINTER(gpiod_chip)
 )
 
 gpiod_chip_open_by_number = wrap_libgpiod_func(
-    "gpiod_chip_open_by_number", [c_uint, ], POINTER(gpiod_chip)
+    "gpiod_chip_open_by_number", [c_uint,], POINTER(gpiod_chip)
 )
 
 gpiod_chip_open_by_label = wrap_libgpiod_func(
-    "gpiod_chip_open_by_label", [c_char_p, ], POINTER(gpiod_chip)
+    "gpiod_chip_open_by_label", [c_char_p,], POINTER(gpiod_chip)
 )
 
 gpiod_chip_open_lookup = wrap_libgpiod_func(
-    "gpiod_chip_open_lookup", [c_char_p, ], POINTER(gpiod_chip)
+    "gpiod_chip_open_lookup", [c_char_p,], POINTER(gpiod_chip)
 )
 
 gpiod_chip_close = wrap_libgpiod_func(
-    "gpiod_chip_close", [POINTER(gpiod_chip), ], None
+    "gpiod_chip_close", [POINTER(gpiod_chip),], None
 )
 
 gpiod_chip_get_line = wrap_libgpiod_func(
-    "gpiod_chip_get_line", [POINTER(gpiod_chip), c_uint, ], POINTER(gpiod_line)
+    "gpiod_chip_get_line", [POINTER(gpiod_chip), c_uint,], POINTER(gpiod_line)
 )
 
 gpiod_chip_find_line = wrap_libgpiod_func(
     "gpiod_chip_find_line",
-    [POINTER(gpiod_chip), c_char_p, ],
+    [POINTER(gpiod_chip), c_char_p,],
     POINTER(gpiod_line),
 )
 
 gpiod_line_request = wrap_libgpiod_func(
     "gpiod_line_request",
-    [POINTER(gpiod_line), POINTER(gpiod_line_request_config), c_int, ],
+    [POINTER(gpiod_line), POINTER(gpiod_line_request_config), c_int,],
     c_int,
 )
 
 gpiod_line_release = wrap_libgpiod_func(
-    "gpiod_line_release", [POINTER(gpiod_line), ], None
+    "gpiod_line_release", [POINTER(gpiod_line),], None
 )
 
 
@@ -287,29 +287,29 @@ def gpiod_line_is_requested(line: POINTER(gpiod_line)) -> bool:
 
 
 gpiod_line_get_value = wrap_libgpiod_func(
-    "gpiod_line_get_value", [POINTER(gpiod_line), ], c_int
+    "gpiod_line_get_value", [POINTER(gpiod_line),], c_int
 )
 
 gpiod_line_set_value = wrap_libgpiod_func(
-    "gpiod_line_set_value", [POINTER(gpiod_line), c_int, ], c_int
+    "gpiod_line_set_value", [POINTER(gpiod_line), c_int,], c_int
 )
 
 gpiod_line_event_wait = wrap_libgpiod_func(
-    "gpiod_line_event_wait", [POINTER(gpiod_line), POINTER(timespec), ], c_int
+    "gpiod_line_event_wait", [POINTER(gpiod_line), POINTER(timespec),], c_int
 )
 
 gpiod_line_event_read = wrap_libgpiod_func(
     "gpiod_line_event_read",
-    [POINTER(gpiod_line), POINTER(gpiod_line_event), ],
+    [POINTER(gpiod_line), POINTER(gpiod_line_event),],
     c_int,
 )
 
 gpiod_line_event_wait_bulk = wrap_libgpiod_func(
     "gpiod_line_event_wait_bulk",
-    [POINTER(gpiod_line_bulk), POINTER(timespec), POINTER(gpiod_line_bulk), ],
+    [POINTER(gpiod_line_bulk), POINTER(timespec), POINTER(gpiod_line_bulk),],
     c_int,
 )
 
 gpiod_line_event_get_fd = wrap_libgpiod_func(
-    "gpiod_line_event_get_fd", [POINTER(gpiod_line), ], c_int
+    "gpiod_line_event_get_fd", [POINTER(gpiod_line),], c_int
 )

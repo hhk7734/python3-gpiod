@@ -1,6 +1,7 @@
+# pylint: disable=missing-docstring
 import sys
 import time
-import gpiod
+from .. import chip, line, line_request
 
 try:
     if len(sys.argv) > 2:
@@ -8,35 +9,34 @@ try:
         LED_LINE_OFFSET = int(sys.argv[2])
     else:
         raise Exception()
-except:
+# pylint: disable=broad-except
+except Exception:
     print(
         """Usage:
     python3 -m gpiod.test.blink <chip> <line offset>"""
     )
     sys.exit()
 
-chip = gpiod.chip(LED_CHIP)
+c = chip(LED_CHIP)
 
-print("chip name: ", chip.name)
-print("chip label: ", chip.label)
-print("number of lines: ", chip.num_lines)
+print("chip name: ", c.name)
+print("chip label: ", c.label)
+print("number of lines: ", c.num_lines)
 
 print()
 
-led = chip.get_line(LED_LINE_OFFSET)
+led = c.get_line(LED_LINE_OFFSET)
 
 print("line offset: ", led.offset)
 print("line name: ", led.name)
 print("line consumer: ", led.consumer)
 print(
     "line direction: ",
-    "input" if led.direction == gpiod.line.DIRECTION_INPUT else "output",
+    "input" if led.direction == line.DIRECTION_INPUT else "output",
 )
 print(
     "line active state: ",
-    "active low"
-    if led.active_state == gpiod.line.ACTIVE_LOW
-    else "active high",
+    "active low" if led.active_state == line.ACTIVE_LOW else "active high",
 )
 print("is line used: ", led.is_used)
 print("is line open drain: ", led.is_open_drain)
@@ -45,22 +45,20 @@ print("is line requested: ", led.is_requested)
 
 print("\nrequest line\n")
 
-config = gpiod.line_request()
+config = line_request()
 config.consumer = "Blink"
-config.request_type = gpiod.line_request.DIRECTION_OUTPUT
+config.request_type = line_request.DIRECTION_OUTPUT
 
 led.request(config)
 
 print("line consumer: ", led.consumer)
 print(
     "line direction: ",
-    "input" if led.direction == gpiod.line.DIRECTION_INPUT else "output",
+    "input" if led.direction == line.DIRECTION_INPUT else "output",
 )
 print(
     "line active state: ",
-    "active low"
-    if led.active_state == gpiod.line.ACTIVE_LOW
-    else "active high",
+    "active low" if led.active_state == line.ACTIVE_LOW else "active high",
 )
 print("is line used: ", led.is_used)
 print("is line open drain: ", led.is_open_drain)

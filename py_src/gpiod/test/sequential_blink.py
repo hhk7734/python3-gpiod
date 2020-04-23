@@ -1,6 +1,7 @@
+# pylint: disable=missing-docstring
 import sys
 import time
-import gpiod
+from .. import chip, line_request
 
 try:
     if len(sys.argv) > 2:
@@ -10,7 +11,8 @@ try:
             LED_LINE_OFFSETS.append(int(sys.argv[i + 2]))
     else:
         raise Exception()
-except:
+# pylint: disable=broad-except
+except Exception:
     print(
         """Usage:
     python3 -m gpiod.test.sequential_blink <chip> <line offset1> \\
@@ -18,11 +20,11 @@ except:
     )
     sys.exit()
 
-chip = gpiod.chip(LED_CHIP)
-leds = chip.get_lines(LED_LINE_OFFSETS)
+c = chip(LED_CHIP)
+leds = c.get_lines(LED_LINE_OFFSETS)
 
-config = gpiod.line_request()
-config.request_type = gpiod.line_request.DIRECTION_OUTPUT
+config = line_request()
+config.request_type = line_request.DIRECTION_OUTPUT
 
 for i in range(leds.size):
     config.consumer = "Blink{}".format(i)

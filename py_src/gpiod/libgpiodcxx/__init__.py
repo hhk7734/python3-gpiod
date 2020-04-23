@@ -74,7 +74,7 @@ def chip_deleter(chip_p: POINTER(libgpiod.gpiod_chip)):
 
 
 class shared_chip:
-    # pylint: disable=missing-function-docstring
+    # pylint: disable=missing-function-docstring, bad-whitespace
     def __init__(self, chip_p: POINTER(libgpiod.gpiod_chip) = None):
         self._chip_p = chip_p
 
@@ -90,7 +90,7 @@ class shared_chip:
 
 
 class chip:
-    # pylint: disable=function-redefined,
+    # pylint: disable=function-redefined, bad-whitespace
     def __init__(
         self,
         device=None,
@@ -389,13 +389,12 @@ class line_request:
 
 
 reqtype_mapping = {
+    # pylint: disable=line-too-long
     line_request.DIRECTION_AS_IS: libgpiod.GPIOD_LINE_REQUEST_DIRECTION_AS_IS,
     line_request.DIRECTION_INPUT: libgpiod.GPIOD_LINE_REQUEST_DIRECTION_INPUT,
     line_request.DIRECTION_OUTPUT: libgpiod.GPIOD_LINE_REQUEST_DIRECTION_OUTPUT,
-    line_request.EVENT_FALLING_EDGE:
-        libgpiod.GPIOD_LINE_REQUEST_EVENT_FALLING_EDGE,
-    line_request.EVENT_RISING_EDGE:
-        libgpiod.GPIOD_LINE_REQUEST_EVENT_RISING_EDGE,
+    line_request.EVENT_FALLING_EDGE: libgpiod.GPIOD_LINE_REQUEST_EVENT_FALLING_EDGE,
+    line_request.EVENT_RISING_EDGE: libgpiod.GPIOD_LINE_REQUEST_EVENT_RISING_EDGE,
     line_request.EVENT_BOTH_EDGES: libgpiod.GPIOD_LINE_REQUEST_EVENT_BOTH_EDGES,
 }
 
@@ -407,7 +406,7 @@ reqflag_mapping = {
 
 
 class line:
-    # pylint: disable=function-redefined
+    # pylint: disable=function-redefined, bad-whitespace
     def __init__(
         self, line_p: POINTER(libgpiod.gpiod_line) = None, owner: chip = chip()
     ):
@@ -821,6 +820,7 @@ class line_event:
 
 class line_bulk:
     # pylint: disable=function-redefined
+    # pylint: disable=missing-function-docstring
     def __init__(self, lines: List[line] = None):
         self._m_bulk = lines if lines is not None else []
 
@@ -931,7 +931,8 @@ class line_bulk:
         if rv < 0:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error polling for events")
-        elif rv > 0:
+
+        if rv > 0:
             for i in range(event_bulk.num_lines):
                 ret.append(
                     line(event_bulk.lines[i], self._m_bulk[i].get_chip())

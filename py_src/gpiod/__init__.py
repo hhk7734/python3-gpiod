@@ -37,8 +37,10 @@ class line_bulk(libgpiodcxx.line_bulk):
 
 
 class line_event(libgpiodcxx.line_event):
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class line_request(libgpiodcxx.line_request):
+    # pylint: disable=too-few-public-methods
     pass

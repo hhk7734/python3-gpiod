@@ -1,4 +1,4 @@
-'''
+"""
 MIT License
 
 Copyright (c) 2020 Hyeonki Hong <hhk7734@gmail.com>
@@ -20,10 +20,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
+"""
 
-from setuptools import setup
 from os import path
+from setuptools import setup
 
 BASE_DIR = path.dirname(path.abspath(__file__))
 CHANGELOG_PATH = path.join(BASE_DIR, "CHANGELOG")
@@ -33,6 +33,4 @@ with open(CHANGELOG_PATH, "r") as f:
     version = version.split()
     version = version[1][1:-1]
 
-setup(
-    version=version,
-)
+setup(version=version,)

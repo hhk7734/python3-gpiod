@@ -1,6 +1,7 @@
+# pylint: disable=missing-docstring
 import sys
 from datetime import timedelta
-import gpiod
+from .. import chip, line_request, line_event
 
 try:
     if len(sys.argv) > 3:
@@ -11,25 +12,26 @@ try:
 
         edge = sys.argv[len(sys.argv) - 1]
         if edge[0] == "r":
-            BUTTON_EDGE = gpiod.line_request.EVENT_RISING_EDGE
+            BUTTON_EDGE = line_request.EVENT_RISING_EDGE
         elif edge[0] == "f":
-            BUTTON_EDGE = gpiod.line_request.EVENT_FALLING_EDGE
+            BUTTON_EDGE = line_request.EVENT_FALLING_EDGE
         else:
-            BUTTON_EDGE = gpiod.line_request.EVENT_BOTH_EDGES
+            BUTTON_EDGE = line_request.EVENT_BOTH_EDGES
     else:
         raise Exception()
-except:
+# pylint: disable=broad-except
+except Exception:
     print(
         """Usage:
-    python3 -m gpiod.test.bulk_button <chip> <line offset> [<line offset2> ...]
+    python3 -m test.bulk_button <chip> <line offset> [<line offset2> ...]
         <[rising|falling|both]>"""
     )
     sys.exit()
 
-chip = gpiod.chip(BUTTON_CHIP)
-buttons = chip.get_lines(BUTTON_LINE_OFFSETS)
+c = chip(BUTTON_CHIP)
+buttons = c.get_lines(BUTTON_LINE_OFFSETS)
 
-config = gpiod.line_request()
+config = line_request()
 config.request_type = BUTTON_EDGE
 
 for i in range(buttons.size):
@@ -43,7 +45,7 @@ while True:
         for it in lines:
             event = it.event_read()
             print(it.consumer, " ", end="")
-            if event.event_type == gpiod.line_event.RISING_EDGE:
+            if event.event_type == line_event.RISING_EDGE:
                 print("rising: ", end="")
             else:
                 print("falling: ", end="")

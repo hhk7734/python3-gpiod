@@ -31,9 +31,27 @@ from ctypes import (
     c_char_p,
     POINTER,
     pointer,
+    set_errno,
     Structure,
 )
+from errno import ENODEV, ENOTTY
+from fcntl import ioctl
+from os import (
+    access,
+    close as os_close,
+    lstat,
+    major,
+    minor,
+    open as os_open,
+    O_CLOEXEC,
+    O_RDWR,
+    R_OK,
+)
+from os.path import basename
+from stat import S_ISCHR
+
 from .time_h import timespec
+from .gpio_h import gpiochip_info, GPIO_GET_CHIPINFO_IOCTL
 
 SO_CANDIDATE = (
     "libgpiod.so",
@@ -207,9 +225,88 @@ class gpiod_chip(Structure):
 
 # Function
 
-gpiod_chip_open = wrap_libgpiod_func(
-    "gpiod_chip_open", [c_char_p,], POINTER(gpiod_chip)
-)
+
+def _is_gpiochip_cdev(path: str) -> bool:
+    try:
+        statbuf = lstat(path)
+    except FileNotFoundError:
+        return False
+
+    # Is it a character device?
+    if not S_ISCHR(statbuf.st_mode):
+        # Passing a file descriptor not associated with a character
+        # device to ioctl() makes it set errno to ENOTTY. Let's do
+        # the same in order to stay compatible with the versions of
+        # libgpiod from before the introduction of this routine.
+        set_errno(ENOTTY)
+        return False
+
+    # Do we have a corresponding sysfs attribute?
+    name = basename(path)
+    sysfsp = "/sys/bus/gpio/devices/{}/dev".format(name)
+    if not access(sysfsp, R_OK):
+        # This is a character device but not the one we're after.
+        # Before the introduction of this function, we'd fail with
+        # ENOTTY on the first GPIO ioctl() call for this file
+        # descriptor. Let's stay compatible here and keep returning
+        # the same error code.
+        set_errno(ENOTTY)
+        return False
+
+    # Make sure the major and minor numbers of the character device
+    # correspond with the ones in the dev attribute in sysfs.
+    devstr = "{}:{}".format(major(statbuf.st_rdev), minor(statbuf.st_rdev))
+
+    try:
+        with open(sysfsp, "r") as fd:
+            sysfsdev = fd.read(len(devstr))
+    except FileNotFoundError:
+        return False
+
+    if sysfsdev != devstr:
+        set_errno(ENODEV)
+        return False
+
+    return True
+
+
+def gpiod_chip_open(path: c_char_p) -> POINTER(gpiod_chip):
+    """
+    @brief Open a gpiochip by path.
+
+    @param path Path to the gpiochip device file.
+
+    @return GPIO chip handle or NULL if an error occurred.
+    """
+    info = gpiochip_info()
+    chip = pointer(gpiod_chip())
+
+    fd = os_open(path, O_RDWR | O_CLOEXEC)
+    if fd < 0:
+        return None
+
+    # We were able to open the file but is it really a gpiochip character
+    # device?
+    if not _is_gpiochip_cdev(path):
+        os_close(fd)
+        return None
+
+    status = ioctl(fd, GPIO_GET_CHIPINFO_IOCTL, info)
+    if status < 0:
+        os_close(fd)
+        return None
+
+    chip[0].fd = fd
+    chip[0].num_lines = info.lines
+    chip[0].name = info.name
+
+    if info.label[0] == "\0":
+        chip[0].label = b"unknown"
+    else:
+        chip[0].label = info.label
+
+    return chip
+
 
 gpiod_chip_open_by_name = wrap_libgpiod_func(
     "gpiod_chip_open_by_name", [c_char_p,], POINTER(gpiod_chip)

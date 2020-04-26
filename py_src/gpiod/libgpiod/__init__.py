@@ -33,6 +33,7 @@ from ctypes import (
     pointer,
     Structure,
 )
+from .time_h import timespec
 
 SO_CANDIDATE = (
     "libgpiod.so",
@@ -74,17 +75,41 @@ if __version__ < (1, 1):
 else:
     ENUM_BASE = 1
 
+
+# pylint: disable=too-few-public-methods
+
+
+# Forward declaration
+class gpiod_chip(Structure):
+    pass
+
+
+# Forward declaration
+class gpiod_line(Structure):
+    pass
+
+
+# Forward declaration
+class gpiod_line_bulk(Structure):
+    pass
+
+
 GPIOD_LINE_BULK_MAX_LINES = 64
+
+
+class gpiod_line_bulk(Structure):
+    # pylint: disable=function-redefined
+    _fields_ = [
+        ("lines", POINTER(gpiod_line) * GPIOD_LINE_BULK_MAX_LINES),
+        ("num_lines", c_uint),
+    ]
+
 
 GPIOD_LINE_DIRECTION_INPUT = ENUM_BASE
 GPIOD_LINE_DIRECTION_OUTPUT = ENUM_BASE + 1
 
 GPIOD_LINE_ACTIVE_STATE_HIGH = ENUM_BASE
 GPIOD_LINE_ACTIVE_STATE_LOW = ENUM_BASE + 1
-
-_LINE_FREE = 0
-_LINE_REQUESTED_VALUES = 1
-_LINE_REQUESTED_EVENTS = 2
 
 GPIOD_LINE_REQUEST_DIRECTION_AS_IS = ENUM_BASE
 GPIOD_LINE_REQUEST_DIRECTION_INPUT = ENUM_BASE + 1
@@ -97,67 +122,31 @@ GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN = 0b001
 GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE = 0b010
 GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW = 0b100
 
+
+class gpiod_line_request_config(Structure):
+    _fields_ = [
+        ("consumer", c_char_p),
+        ("request_type", c_int),
+        ("flags", c_int),
+    ]
+
+
 GPIOD_LINE_EVENT_RISING_EDGE = ENUM_BASE
 GPIOD_LINE_EVENT_FALLING_EDGE = ENUM_BASE + 1
 
 
-# pylint: disable=too-few-public-methods
-
-
-class timespec(Structure):
-    pass
-
-
-class line_fd_handle(Structure):
-    pass
-
-
-class gpiod_chip(Structure):
-    pass
-
-
-class gpiod_line(Structure):
-    pass
-
-
-class gpiod_line_bulk(Structure):
-    pass
-
-
-class gpiod_line_request_config(Structure):
-    pass
-
-
 class gpiod_line_event(Structure):
-    pass
-
-
-class timespec(Structure):
-    # pylint: disable=function-redefined
     _fields_ = [
-        ("tv_sec", c_long),
-        ("tv_nsec", c_long),
+        ("ts", timespec),
+        ("event_type", c_int),
     ]
 
 
-class line_fd_handle(Structure):
-    # pylint: disable=function-redefined
-    _fields_ = [
-        ("fd", c_int),
-        ("refcount", c_int),
-    ]
+# core.c
 
-
-class gpiod_chip(Structure):
-    # pylint: disable=function-redefined
-    _fields_ = [
-        ("lines", POINTER(POINTER(gpiod_line))),
-        ("num_lines", c_uint),
-        ("fd", c_int),
-        ("name", c_char * 32),
-        ("label", c_char * 32),
-    ]
-
+LINE_FREE = 0
+LINE_REQUESTED_VALUES = 1
+LINE_REQUESTED_EVENTS = 2
 
 if __version__ < (1, 0, 1):
 
@@ -181,6 +170,12 @@ if __version__ < (1, 0, 1):
 
 else:
 
+    class line_fd_handle(Structure):
+        _fields_ = [
+            ("fd", c_int),
+            ("refcount", c_int),
+        ]
+
     class gpiod_line(Structure):
         # pylint: disable=function-redefined
         _fields_ = [
@@ -199,33 +194,18 @@ else:
         ]
 
 
-class gpiod_line_bulk(Structure):
+class gpiod_chip(Structure):
     # pylint: disable=function-redefined
     _fields_ = [
-        ("lines", POINTER(gpiod_line) * GPIOD_LINE_BULK_MAX_LINES),
+        ("lines", POINTER(POINTER(gpiod_line))),
         ("num_lines", c_uint),
-    ]
-
-
-class gpiod_line_request_config(Structure):
-    # pylint: disable=function-redefined
-    _fields_ = [
-        ("consumer", c_char_p),
-        ("request_type", c_int),
-        ("flags", c_int),
-    ]
-
-
-class gpiod_line_event(Structure):
-    # pylint: disable=function-redefined
-    _fields_ = [
-        ("ts", timespec),
-        ("event_type", c_int),
+        ("fd", c_int),
+        ("name", c_char * 32),
+        ("label", c_char * 32),
     ]
 
 
 # Function
-
 
 gpiod_chip_open = wrap_libgpiod_func(
     "gpiod_chip_open", [c_char_p,], POINTER(gpiod_chip)
@@ -281,8 +261,8 @@ def gpiod_line_is_requested(line: POINTER(gpiod_line)) -> bool:
     @return True if given line was requested, false otherwise.
     """
     return (
-        line[0].state == _LINE_REQUESTED_VALUES
-        or line[0].state == _LINE_REQUESTED_EVENTS
+        line[0].state == LINE_REQUESTED_VALUES
+        or line[0].state == LINE_REQUESTED_EVENTS
     )
 
 

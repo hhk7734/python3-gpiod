@@ -46,9 +46,11 @@ from os import (
     O_CLOEXEC,
     O_RDWR,
     R_OK,
+    scandir,
 )
 from os.path import basename
 from stat import S_ISCHR
+from typing import List
 
 from .time_h import timespec
 from .gpio_h import gpiochip_info, GPIO_GET_CHIPINFO_IOCTL
@@ -270,19 +272,20 @@ def _is_gpiochip_cdev(path: str) -> bool:
     return True
 
 
-def gpiod_chip_open(path: c_char_p) -> POINTER(gpiod_chip):
+def gpiod_chip_open(path: str) -> POINTER(gpiod_chip):
     """
     @brief Open a gpiochip by path.
 
-    @param path Path to the gpiochip device file.
+    @param path: Path to the gpiochip device file.
 
     @return GPIO chip handle or NULL if an error occurred.
     """
     info = gpiochip_info()
     chip = pointer(gpiod_chip())
 
-    fd = os_open(path, O_RDWR | O_CLOEXEC)
-    if fd < 0:
+    try:
+        fd = os_open(path, O_RDWR | O_CLOEXEC)
+    except FileNotFoundError:
         return None
 
     # We were able to open the file but is it really a gpiochip character
@@ -308,21 +311,76 @@ def gpiod_chip_open(path: c_char_p) -> POINTER(gpiod_chip):
     return chip
 
 
-gpiod_chip_open_by_name = wrap_libgpiod_func(
-    "gpiod_chip_open_by_name", [c_char_p,], POINTER(gpiod_chip)
-)
+def gpiod_chip_open_by_name(name: str) -> POINTER(gpiod_chip):
+    """
+    @brief Open a gpiochip by name.
 
-gpiod_chip_open_by_number = wrap_libgpiod_func(
-    "gpiod_chip_open_by_number", [c_uint,], POINTER(gpiod_chip)
-)
+    @param name: Name of the gpiochip to open.
 
-gpiod_chip_open_by_label = wrap_libgpiod_func(
+    @return GPIO chip handle or NULL if an error occurred.
+    """
+    return gpiod_chip_open("/dev/" + str(name))
+
+
+def gpiod_chip_open_by_number(num: int) -> POINTER(gpiod_chip):
+    """
+    @brief Open a gpiochip by number.
+
+    @param num: Number of the gpiochip.
+
+    @return GPIO chip handle or NULL if an error occurred.
+    """
+    return gpiod_chip_open("/dev/gpiochip" + str(num))
+
+
+_gpiod_chip_open_by_label = wrap_libgpiod_func(
     "gpiod_chip_open_by_label", [c_char_p,], POINTER(gpiod_chip)
 )
 
-gpiod_chip_open_lookup = wrap_libgpiod_func(
-    "gpiod_chip_open_lookup", [c_char_p,], POINTER(gpiod_chip)
-)
+
+def gpiod_chip_open_by_label(label: str) -> POINTER(gpiod_chip):
+    """
+    @brief Open a gpiochip by label.
+
+    @param label: Label of the gpiochip to open.
+
+    @return GPIO chip handle or NULL if the chip with given label was not found
+            or an error occured.
+
+    @note If the chip cannot be found but no other error occurred, errno is set
+          to ENOENT.
+    """
+    return _gpiod_chip_open_by_label(label.encode())
+
+
+def gpiod_chip_open_lookup(descr) -> POINTER(gpiod_chip):
+    """
+    @brief Open a gpiochip based on the best guess what the path is.
+
+    @param descr: String describing the gpiochip.
+
+    @return GPIO chip handle or NULL if an error occurred.
+
+    This routine tries to figure out whether the user passed it the path to the
+    GPIO chip, its name, label or number as a string. Then it tries to open it
+    using one of the gpiod_chip_open** variants.
+    """
+    try:
+        num = int(descr)
+        return gpiod_chip_open_by_number(num)
+    except ValueError:
+        pass
+
+    chip = gpiod_chip_open_by_label(descr)
+
+    if not bool(chip):
+        if descr[:5] != "/dev/":
+            return gpiod_chip_open_by_name(descr)
+
+        return gpiod_chip_open(descr)
+
+    return chip
+
 
 gpiod_chip_close = wrap_libgpiod_func(
     "gpiod_chip_close", [POINTER(gpiod_chip),], None

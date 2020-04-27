@@ -142,7 +142,7 @@ class chip:
         if how == chip.OPEN_BY_NUMBER:
             device = int(device)
         else:
-            device = str(device).encode()
+            device = str(device)
 
         func = open_funcs[how]
 

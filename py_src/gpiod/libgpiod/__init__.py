@@ -311,6 +311,23 @@ def gpiod_chip_open(path: str) -> POINTER(gpiod_chip):
     return chip
 
 
+def gpiod_chip_close(chip: POINTER(gpiod_chip)):
+    """
+    @brief Close a GPIO chip handle and release all allocated resources.
+
+    @param chip: The GPIO chip object.
+    """
+    if bool(chip[0].lines):
+        for i in range(chip[0].num_lines):
+            line = chip[0].lines[i]
+            if bool(line):
+                gpiod_line_release(line)
+
+    os_close(chip[0].fd)
+    # How to free the chip object?
+    del chip
+
+
 def gpiod_chip_open_by_name(name: str) -> POINTER(gpiod_chip):
     """
     @brief Open a gpiochip by name.
@@ -381,10 +398,6 @@ def gpiod_chip_open_lookup(descr) -> POINTER(gpiod_chip):
 
     return chip
 
-
-gpiod_chip_close = wrap_libgpiod_func(
-    "gpiod_chip_close", [POINTER(gpiod_chip),], None
-)
 
 gpiod_chip_get_line = wrap_libgpiod_func(
     "gpiod_chip_get_line", [POINTER(gpiod_chip), c_uint,], POINTER(gpiod_line)

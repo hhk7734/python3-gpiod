@@ -121,7 +121,7 @@ class line_fd_handle:
 
 class gpiod_line:
     # pylint: disable=function-redefined, too-many-instance-attributes
-    def __init__(self):
+    def __init__(self, chip: gpiod_chip):
         self.offset = 0
         self.direction = 0
         self.active_state = 0
@@ -130,7 +130,7 @@ class gpiod_line:
         self.open_drain = False
         self.state = 0
         self.up_to_date = False
-        self.chip = gpiod_chip()
+        self.chip = chip
         self.fd_handle = line_fd_handle()
         # size 32
         self.name = ""
@@ -140,14 +140,35 @@ class gpiod_line:
 
 class gpiod_chip:
     # pylint: disable=function-redefined
-    def __init__(self):
-        self.lines = []
-        self.num_lines = 0
-        self.fd = 0
+    def __init__(self, num_lines: int, fd: int, name: str, label: str):
+        self.lines = [None] * num_lines
+        self._num_lines = num_lines
+        self._fd = fd
         # size 32
-        self.name = ""
+        self._name = name
         # size 32
-        self.label = ""
+        self._label = label
+
+    # pylint: disable=missing-function-docstring
+
+    @property
+    def num_lines(self):
+        # ::gpiod_chip_num_lines(chip)
+        return self._num_lines
+
+    @property
+    def fd(self):
+        return self._fd
+
+    @property
+    def name(self):
+        # ::gpiod_chip_name(chip)
+        return self._name
+
+    @property
+    def label(self):
+        # ::gpiod_chip_label(chip)
+        return self._label
 
 
 # Function
@@ -208,7 +229,6 @@ def gpiod_chip_open(path: str) -> gpiod_chip:
     @return GPIO chip handle or None if an error occurred.
     """
     info = gpiochip_info()
-    chip = gpiod_chip()
 
     try:
         fd = os_open(path, O_RDWR | O_CLOEXEC)
@@ -226,16 +246,14 @@ def gpiod_chip_open(path: str) -> gpiod_chip:
         os_close(fd)
         return None
 
-    chip.fd = fd
-    chip.num_lines = info.lines
-    chip.name = info.name.decode()
-
     if info.label[0] == "\0":
-        chip.label = "unknown"
+        label = "unknown"
     else:
-        chip.label = info.label.decode()
+        label = info.label.decode()
 
-    return chip
+    return gpiod_chip(
+        num_lines=info.lines, fd=fd, name=info.name.decode(), label=label
+    )
 
 
 def gpiod_chip_close(chip: gpiod_chip):
@@ -253,39 +271,6 @@ def gpiod_chip_close(chip: gpiod_chip):
     os_close(chip.fd)
     # How to free the chip object?
     del chip
-
-
-def gpiod_chip_name(chip: gpiod_chip) -> str:
-    """
-    @brief Get the GPIO chip name as represented in the kernel.
-
-    @param chip: The GPIO chip object.
-
-    @return String containing the chip name.
-    """
-    return chip.name
-
-
-def gpiod_chip_label(chip: gpiod_chip) -> str:
-    """
-    @brief Get the GPIO chip label as represented in the kernel.
-
-    @param chip: The GPIO chip object.
-
-    @return String containing the chip label.
-    """
-    return chip.label
-
-
-def gpiod_chip_num_lines(chip: gpiod_chip) -> int:
-    """
-    @brief Get the number of GPIO lines exposed by this chip.
-
-    @param chip: The GPIO chip object.
-
-    @return Number of GPIO lines.
-    """
-    return chip.num_lines
 
 
 def gpiod_chip_get_line(chip: gpiod_chip, offset: int) -> gpiod_line:
@@ -384,7 +369,7 @@ def gpiod_chip_open_by_label(label: str) -> gpiod_chip:
         return None
 
     for chip in chip_iter:
-        if gpiod_chip_label(chip) == label:
+        if chip.label == label:
             # gpiod_chip_iter_free_noclose
             return chip
 

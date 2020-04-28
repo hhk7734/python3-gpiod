@@ -642,7 +642,7 @@ def gpiod_line_get_value_bulk(bulk: gpiod_line_bulk, values: List[int]) -> int:
     if not _line_bulk_same_chip(bulk) or not _line_bulk_all_requested(bulk):
         return -1
 
-    fd = bulk[0].fd
+    fd = bulk[0].fd_handle.fd
 
     status = ioctl(fd, GPIOHANDLE_GET_LINE_VALUES_IOCTL, data)
     if status < 0:
@@ -655,7 +655,50 @@ def gpiod_line_get_value_bulk(bulk: gpiod_line_bulk, values: List[int]) -> int:
 
 
 def gpiod_line_set_value(line: gpiod_line, value: int) -> int:
-    pass
+    """
+    @brief Set the value of a single GPIO line.
+
+    @param line:  GPIO line object.
+    @param value: New value.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+    """
+    bulk = gpiod_line_bulk()
+
+    bulk.add(line)
+
+    return gpiod_line_set_value_bulk(bulk, [value])
+
+
+def gpiod_line_set_value_bulk(bulk: gpiod_line_bulk, values: List[int]) -> int:
+    """
+    @brief Set the values of a set of GPIO lines.
+
+    @param bulk:   Set of GPIO lines to reserve.
+    @param values: An array holding line_bulk->num_lines new values for lines.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+
+    If the lines were not previously requested together, the behavior is
+    undefined.
+    """
+    data = gpiohandle_data()
+
+    if not _line_bulk_same_chip(bulk) or not _line_bulk_all_requested(bulk):
+        return -1
+
+    for i in range(bulk.num_lines):
+        data.values[i] = 1 if values[i] else 0
+
+    fd = bulk[0].fd_handle.fd
+
+    status = ioctl(fd, GPIOHANDLE_SET_LINE_VALUES_IOCTL, data)
+    if status < 0:
+        return -1
+
+    return 0
 
 
 def gpiod_line_event_wait(line: gpiod_line, timeout: timespec) -> int:

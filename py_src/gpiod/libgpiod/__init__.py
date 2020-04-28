@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from ctypes import set_errno
-from errno import EBUSY, EINVAL, ENODEV, ENOENT, ENOTTY
+from errno import EBUSY, EINVAL, ENODEV, ENOENT, ENOTTY, EPERM
 from fcntl import ioctl
 from os import (
     access,
@@ -385,6 +385,15 @@ def _line_bulk_same_chip(bulk: gpiod_line_bulk) -> bool:
     return True
 
 
+def _line_bulk_all_requested(bulk: gpiod_line_bulk) -> bool:
+    for it in bulk:
+        if not gpiod_line_is_requested(it):
+            set_errno(EPERM)
+            return False
+
+    return True
+
+
 def _line_bulk_all_free(bulk: gpiod_line_bulk) -> bool:
     for it in bulk:
         if not gpiod_line_is_free(it):
@@ -594,7 +603,55 @@ def gpiod_line_is_free(line: gpiod_line) -> bool:
 
 
 def gpiod_line_get_value(line: gpiod_line) -> int:
-    pass
+    """
+    @brief Read current value of a single GPIO line.
+
+    @param line: GPIO line object.
+
+    @return 0 or 1 if the operation succeeds. On error this routine returns -1
+            and sets the last error number.
+    """
+    bulk = gpiod_line_bulk()
+    value = [0]
+
+    bulk.add(line)
+
+    status = gpiod_line_get_value_bulk(bulk, value)
+    if status < 0:
+        return -1
+
+    return value[0]
+
+
+def gpiod_line_get_value_bulk(bulk: gpiod_line_bulk, values: List[int]) -> int:
+    """
+    @brief Read current values of a set of GPIO lines.
+
+    @param bulk:   Set of GPIO lines to reserve.
+    @param values: An array big enough to hold line_bulk->num_lines values.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+
+    If succeeds, this routine fills the values array with a set of values in
+    the same order, the lines are added to line_bulk. If the lines were not
+    previously requested together, the behavior is undefined.
+    """
+    data = gpiohandle_data()
+
+    if not _line_bulk_same_chip(bulk) or not _line_bulk_all_requested(bulk):
+        return -1
+
+    fd = bulk[0].fd
+
+    status = ioctl(fd, GPIOHANDLE_GET_LINE_VALUES_IOCTL, data)
+    if status < 0:
+        return -1
+
+    for i in range(bulk.num_lines):
+        values[i] = data.values[i]
+
+    return 0
 
 
 def gpiod_line_set_value(line: gpiod_line, value: int) -> int:

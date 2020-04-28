@@ -135,7 +135,10 @@ _LINE_REQUESTED_EVENTS = 2
 class line_fd_handle:
     def __init__(self):
         self.fd = 0
-        self.refcount = 0
+
+    def __del__(self):
+        # line_fd_decref(line)
+        os_close(self.fd)
 
 
 class gpiod_line:
@@ -150,7 +153,7 @@ class gpiod_line:
         self.state = 0
         self.up_to_date = False
         self.chip = chip
-        self.fd_handle = line_fd_handle()
+        self.fd_handle = None
         # size 32
         self.name = ""
         # size 32
@@ -451,6 +454,7 @@ def _line_request_values(
 
     for it in bulk:
         it.state = _LINE_REQUESTED_VALUES
+        # line_set_fd(line, line_fd) -> line_fd_incref(line)
         it.fd_handle = line_fd
         _line_maybe_update(it)
 
@@ -536,7 +540,31 @@ def gpiod_line_request_bulk(
 
 
 def gpiod_line_release(line: gpiod_line):
-    pass
+    """
+    @brief Release a previously reserved line.
+
+    @param line: GPIO line object.
+    """
+    bulk = gpiod_line_bulk()
+
+    bulk.add(line)
+
+    gpiod_line_release_bulk(bulk)
+
+
+def gpiod_line_release_bulk(bulk: gpiod_line_bulk):
+    """
+    @brief Release a set of previously reserved lines.
+
+    @param bulk: Set of GPIO lines to release.
+
+    If the lines were not previously requested together, the behavior is
+    undefined.
+    """
+    for it in bulk:
+        # line_fd_decref(line)
+        it.fd_handle = None
+        it.state = _LINE_FREE
 
 
 def gpiod_line_is_requested(line: gpiod_line) -> bool:

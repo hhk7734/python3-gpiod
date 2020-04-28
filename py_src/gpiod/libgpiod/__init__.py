@@ -34,7 +34,7 @@ from ctypes import (
     set_errno,
     Structure,
 )
-from errno import ENODEV, ENOTTY
+from errno import ENODEV, ENOENT, ENOTTY
 from fcntl import ioctl
 from os import (
     access,
@@ -402,11 +402,6 @@ def gpiod_chip_open_by_number(num: int) -> POINTER(gpiod_chip):
     return gpiod_chip_open("/dev/gpiochip" + str(num))
 
 
-_gpiod_chip_open_by_label = wrap_libgpiod_func(
-    "gpiod_chip_open_by_label", [c_char_p,], POINTER(gpiod_chip)
-)
-
-
 def gpiod_chip_open_by_label(label: str) -> POINTER(gpiod_chip):
     """
     @brief Open a gpiochip by label.
@@ -419,7 +414,19 @@ def gpiod_chip_open_by_label(label: str) -> POINTER(gpiod_chip):
     @note If the chip cannot be found but no other error occurred, errno is set
           to ENOENT.
     """
-    return _gpiod_chip_open_by_label(label.encode())
+    chip_iter = iter(gpiod_chip_iter())
+    if chip_iter is None:
+        return None
+
+    for chip in chip_iter:
+        if gpiod_chip_label(chip) == label:
+            # gpiod_chip_iter_free_noclose
+            return chip
+
+    set_errno(ENOENT)
+    # gpiod_chip_iter_free
+
+    return None
 
 
 def gpiod_chip_open_lookup(descr) -> POINTER(gpiod_chip):

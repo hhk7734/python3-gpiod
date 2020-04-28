@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from ctypes import set_errno
-from errno import EINVAL, ENODEV, ENOENT, ENOTTY
+from errno import EBUSY, EINVAL, ENODEV, ENOENT, ENOTTY
 from fcntl import ioctl
 from os import (
     access,
@@ -38,19 +38,10 @@ from os import (
 )
 from os.path import basename
 from stat import S_ISCHR
+from typing import List
 
 from .time_h import timespec
-from .gpio_h import (
-    gpiochip_info,
-    gpioline_info,
-    GPIOLINE_FLAG_ACTIVE_LOW,
-    GPIOLINE_FLAG_IS_OUT,
-    GPIOLINE_FLAG_KERNEL,
-    GPIOLINE_FLAG_OPEN_DRAIN,
-    GPIOLINE_FLAG_OPEN_SOURCE,
-    GPIO_GET_CHIPINFO_IOCTL,
-    GPIO_GET_LINEINFO_IOCTL,
-)
+from .gpio_h import *
 
 # pylint: disable=too-few-public-methods
 
@@ -76,9 +67,27 @@ GPIOD_LINE_BULK_MAX_LINES = 64
 class gpiod_line_bulk:
     # pylint: disable=function-redefined
     def __init__(self):
-        # GPIOD_LINE_BULK_MAX_LINES
-        self.lines = []
-        self.num_lines = 0
+        # gpiod_line_bulk_init(bulk)
+        self._lines = []
+
+    # pylint: disable=missing-function-docstring
+
+    def add(self, line: gpiod_line):
+        # gpiod_line_bulk_add(bulk, line)
+        if self.num_lines < GPIOD_LINE_BULK_MAX_LINES:
+            self._lines.append(line)
+
+    @property
+    def num_lines(self) -> int:
+        # gpiod_line_bulk_num_lines(bulk)
+        return len(self._lines)
+
+    def __getitem__(self, offset):
+        # gpiod_line_bulk_get_line(bulk, offset)
+        return self._lines[offset]
+
+    def __iter__(self):
+        return iter(self._lines)
 
 
 GPIOD_LINE_DIRECTION_INPUT = 1
@@ -118,9 +127,9 @@ class gpiod_line_event:
 
 # core.c
 
-LINE_FREE = 0
-LINE_REQUESTED_VALUES = 1
-LINE_REQUESTED_EVENTS = 2
+_LINE_FREE = 0
+_LINE_REQUESTED_VALUES = 1
+_LINE_REQUESTED_EVENTS = 2
 
 
 class line_fd_handle:
@@ -310,6 +319,12 @@ def gpiod_chip_get_line(chip: gpiod_chip, offset: int) -> gpiod_line:
     return chip.lines[offset]
 
 
+def _line_maybe_update(line: gpiod_line):
+    status = gpiod_line_update(line)
+    if status < 0:
+        line.up_to_date = False
+
+
 def gpiod_line_update(line: gpiod_line) -> int:
     """
     @brief Re-read the line info.
@@ -353,10 +368,171 @@ def gpiod_line_update(line: gpiod_line) -> int:
     return 0
 
 
+def _line_bulk_same_chip(bulk: gpiod_line_bulk) -> bool:
+    if bulk.num_lines == 1:
+        return True
+
+    first_chip = bulk[0].chip
+
+    for it in bulk:
+        if it.chip != first_chip:
+            set_errno(EINVAL)
+            return False
+
+    return True
+
+
+def _line_bulk_all_free(bulk: gpiod_line_bulk) -> bool:
+    for it in bulk:
+        if not gpiod_line_is_free(it):
+            set_errno(EBUSY)
+            return False
+
+    return True
+
+
+def _line_request_values(
+    bulk: gpiod_line_bulk,
+    config: gpiod_line_request_config,
+    default_vals: List[int],
+) -> int:
+    if config.request_type != GPIOD_LINE_REQUEST_DIRECTION_OUTPUT and (
+        config.flags
+        & (
+            GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN
+            | GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE
+        )
+    ):
+        set_errno(EINVAL)
+        return -1
+
+    if (config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN) and (
+        config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE
+    ):
+        set_errno(EINVAL)
+        return -1
+
+    # pylint: disable=no-member
+    req = gpiohandle_request()
+
+    if config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN:
+        req.flags |= GPIOHANDLE_REQUEST_OPEN_DRAIN
+    if config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE:
+        req.flags |= GPIOHANDLE_REQUEST_OPEN_SOURCE
+    if config.flags & GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW:
+        req.flags |= GPIOHANDLE_REQUEST_ACTIVE_LOW
+
+    if config.request_type == GPIOD_LINE_REQUEST_DIRECTION_INPUT:
+        req.flags |= GPIOHANDLE_REQUEST_INPUT
+    elif config.request_type == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT:
+        req.flags |= GPIOHANDLE_REQUEST_OUTPUT
+
+    req.lines = bulk.num_lines
+
+    for i in range(bulk.num_lines):
+        req.lineoffsets[i] = bulk[i].offset
+        if (
+            config.request_type == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT
+            and default_vals
+        ):
+            req.default_values[i] = 1 if default_vals[i] else 0
+
+    if config.consumer:
+        req.consumer_label = config.consumer[:32].encode()
+
+    fd = bulk[0].chip.fd
+
+    status = ioctl(fd, GPIO_GET_LINEHANDLE_IOCTL, req)
+    if status < 0:
+        return -1
+
+    line_fd = line_fd_handle()
+    line_fd.fd = req.fd
+
+    for it in bulk:
+        it.state = _LINE_REQUESTED_VALUES
+        it.fd_handle = line_fd
+        _line_maybe_update(it)
+
+    return 0
+
+
+def _line_request_events(
+    bulk: gpiod_line_bulk, config: gpiod_line_request_config
+) -> int:
+    pass
+
+
 def gpiod_line_request(
     line: gpiod_line, config: gpiod_line_request_config, default_val: int
 ) -> int:
-    pass
+    """
+    @brief Reserve a single line.
+
+    @param line:        GPIO line object.
+    @param config:      Request options.
+    @param default_val: Initial line value - only relevant if we're setting
+                        the direction to output.
+
+    @return 0 if the line was properly reserved. In case of an error this
+    routine returns -1 and sets the last error number.
+
+    If this routine succeeds, the caller takes ownership of the GPIO line until
+    it's released.
+    """
+    bulk = gpiod_line_bulk()
+
+    bulk.add(line)
+
+    return gpiod_line_request_bulk(bulk, config, [default_val])
+
+
+def _line_request_is_direction(request: int) -> bool:
+    return request in [
+        GPIOD_LINE_REQUEST_DIRECTION_AS_IS,
+        GPIOD_LINE_REQUEST_DIRECTION_INPUT,
+        GPIOD_LINE_REQUEST_DIRECTION_OUTPUT,
+    ]
+
+
+def _line_request_is_events(request: int) -> bool:
+    return request in [
+        GPIOD_LINE_REQUEST_EVENT_FALLING_EDGE,
+        GPIOD_LINE_REQUEST_EVENT_RISING_EDGE,
+        GPIOD_LINE_REQUEST_EVENT_BOTH_EDGES,
+    ]
+
+
+def gpiod_line_request_bulk(
+    bulk: gpiod_line_bulk,
+    config: gpiod_line_request_config,
+    default_vals: List[int],
+) -> int:
+    """
+    @brief Reserve a set of GPIO lines.
+
+    @param bulk:         Set of GPIO lines to reserve.
+    @param config:       Request options.
+    @param default_vals: Initial line values - only relevant if we're setting
+                         the direction to output.
+
+    @return 0 if the all lines were properly requested. In case of an error
+            this routine returns -1 and sets the last error number.
+
+    If this routine succeeds, the caller takes ownership of the GPIO lines
+    until they're released. All the requested lines must be prodivided by the
+    same gpiochip.
+    """
+    if not _line_bulk_same_chip(bulk) or not _line_bulk_all_free(bulk):
+        return -1
+
+    if _line_request_is_direction(config.request_type):
+        return _line_request_values(bulk, config, default_vals)
+    if _line_request_is_events(config.request_type):
+        return _line_request_events(bulk, config)
+
+    set_errno(EINVAL)
+    return -1
 
 
 def gpiod_line_release(line: gpiod_line):
@@ -372,9 +548,21 @@ def gpiod_line_is_requested(line: gpiod_line) -> bool:
     @return True if given line was requested, false otherwise.
     """
     return (
-        line.state == LINE_REQUESTED_VALUES
-        or line.state == LINE_REQUESTED_EVENTS
+        line.state == _LINE_REQUESTED_VALUES
+        or line.state == _LINE_REQUESTED_EVENTS
     )
+
+
+def gpiod_line_is_free(line: gpiod_line) -> bool:
+    """
+    @brief Check if the calling user has neither requested ownership of this
+           line nor configured any event notifications.
+
+    @param line: GPIO line object.
+
+    @return True if given line is free, false otherwise.
+    """
+    return line.state == _LINE_FREE
 
 
 def gpiod_line_get_value(line: gpiod_line) -> int:

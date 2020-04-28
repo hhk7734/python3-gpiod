@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-from ctypes import c_char, c_uint32, c_int, Structure
+from ctypes import c_char, c_uint8, c_uint32, c_int, Structure
 from .ioctl_h import _IOR, _IOWR
 
 # pylint: disable=too-few-public-methods
@@ -53,12 +53,18 @@ class gpioline_info(Structure):
 
 GPIOHANDLES_MAX = 64
 
+GPIOHANDLE_REQUEST_INPUT = 0b0_0001
+GPIOHANDLE_REQUEST_OUTPUT = 0b0_0010
+GPIOHANDLE_REQUEST_ACTIVE_LOW = 0b0_0100
+GPIOHANDLE_REQUEST_OPEN_DRAIN = 0b0_1000
+GPIOHANDLE_REQUEST_OPEN_SOURCE = 0b1_0000
+
 
 class gpiohandle_request(Structure):
     _fields_ = [
         ("lineoffsets", c_uint32 * GPIOHANDLES_MAX),
         ("flags", c_uint32),
-        ("default_values", c_uint32 * GPIOHANDLES_MAX),
+        ("default_values", c_uint8 * GPIOHANDLES_MAX),
         ("consumer_label", c_char * 32),
         ("lines", c_uint32),
         ("fd", c_int),
@@ -66,6 +72,7 @@ class gpiohandle_request(Structure):
 
 
 class gpioevent_request(Structure):
+    _pack_ = 1
     _fields_ = [
         ("lineoffset", c_uint32),
         ("handleflags", c_uint32),

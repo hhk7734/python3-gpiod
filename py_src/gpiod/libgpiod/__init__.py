@@ -451,6 +451,66 @@ def gpiod_chip_open_lookup(descr) -> POINTER(gpiod_chip):
     return chip
 
 
+# iter.c
+
+
+class gpiod_chip_iter:
+    def __init__(self):
+        self.chips = []
+        self.offset = 0
+
+    def __iter__(self):
+        """
+        gpiod_chip_iter_new()
+
+        @brief Create a new gpiochip iterator.
+
+        @return A new chip iterator object or None if an error occurred.
+        """
+        dirs = []
+        for it in scandir("/dev"):
+            if it.name[:8] == "gpiochip":
+                dirs.append(it.path)
+
+        if len(dirs) == 0:
+            return None
+
+        for it in dirs:
+            chip = gpiod_chip_open(it)
+            if chip is None:
+                for c in self.chips:
+                    gpiod_chip_close(c)
+                self.chips.clear()
+                return None
+
+            self.chips.append(chip)
+
+        return self
+
+    def __next__(self):
+        """
+        gpiod_chip_iter_next()
+
+        @brief Get the next gpiochip handle.
+
+        @return The next open gpiochip handle or raise StopIteration if no more
+                chips are present in the system.
+
+        @note The previous chip handle will be closed.
+        """
+        if self.offset > 0:
+            gpiod_chip_close(self.chips[self.offset - 1])
+            self.chips[self.offset - 1] = None
+
+        # gpiod_chip_iter_next_noclose
+        if self.offset < len(self.chips):
+            index = self.offset
+            self.offset += 1
+            return self.chips[index]
+
+        raise StopIteration
+
+
 gpiod_chip_get_line = wrap_libgpiod_func(
     "gpiod_chip_get_line", [POINTER(gpiod_chip), c_uint,], POINTER(gpiod_line)
 )

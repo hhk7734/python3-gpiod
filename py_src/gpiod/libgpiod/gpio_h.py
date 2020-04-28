@@ -71,6 +71,16 @@ class gpiohandle_request(Structure):
     ]
 
 
+class gpiohandle_data(Structure):
+    _fields_ = [
+        ("values", c_uint8 * GPIOHANDLES_MAX),
+    ]
+
+
+GPIOHANDLE_GET_LINE_VALUES_IOCTL = _IOWR(0xB4, 0x08, gpiohandle_data)
+GPIOHANDLE_SET_LINE_VALUES_IOCTL = _IOWR(0xB4, 0x09, gpiohandle_data)
+
+
 class gpioevent_request(Structure):
     _pack_ = 1
     _fields_ = [

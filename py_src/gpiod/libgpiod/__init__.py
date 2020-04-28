@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from ctypes import set_errno
+from datetime import datetime, timedelta
 from errno import EBUSY, EINVAL, ENODEV, ENOENT, ENOTTY, EPERM
 from fcntl import ioctl
 from os import (
@@ -40,7 +41,6 @@ from os.path import basename
 from stat import S_ISCHR
 from typing import List
 
-from .time_h import timespec
 from .gpio_h import *
 
 # pylint: disable=too-few-public-methods
@@ -121,7 +121,7 @@ GPIOD_LINE_EVENT_FALLING_EDGE = 2
 
 class gpiod_line_event:
     def __init__(self):
-        self.ts = timespec()
+        self.ts = datetime()
         self.event_type = 0
 
 
@@ -701,12 +701,12 @@ def gpiod_line_set_value_bulk(bulk: gpiod_line_bulk, values: List[int]) -> int:
     return 0
 
 
-def gpiod_line_event_wait(line: gpiod_line, timeout: timespec) -> int:
+def gpiod_line_event_wait(line: gpiod_line, timeout: timedelta) -> int:
     pass
 
 
 def gpiod_line_event_wait_bulk(
-    bulk: gpiod_line_bulk, timeout: timespec, event_bulk: gpiod_line_bulk
+    bulk: gpiod_line_bulk, timeout: timedelta, event_bulk: gpiod_line_bulk
 ) -> int:
     pass
 

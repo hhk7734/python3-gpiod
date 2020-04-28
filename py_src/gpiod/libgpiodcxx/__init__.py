@@ -179,7 +179,7 @@ class chip:
         """
         self._throw_if_noref()
 
-        return self._m_chip.get()[0].name.decode()
+        return libgpiod.gpiod_chip_name(self._m_chip.get())
 
     @property
     def label(self) -> str:
@@ -193,7 +193,7 @@ class chip:
         """
         self._throw_if_noref()
 
-        return self._m_chip.get()[0].label.decode()
+        return libgpiod.gpiod_chip_label(self._m_chip.get())
 
     @property
     def num_lines(self) -> int:
@@ -207,7 +207,7 @@ class chip:
         """
         self._throw_if_noref()
 
-        return self._m_chip.get()[0].num_lines
+        return libgpiod.gpiod_chip_num_lines(self._m_chip.get())
 
     def get_line(self, offset: int) -> line:
         """

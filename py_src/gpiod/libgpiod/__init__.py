@@ -227,6 +227,8 @@ class gpiod_chip(Structure):
 
 # Function
 
+# core.c
+
 
 def _is_gpiochip_cdev(path: str) -> bool:
     try:
@@ -326,6 +328,42 @@ def gpiod_chip_close(chip: POINTER(gpiod_chip)):
     os_close(chip[0].fd)
     # How to free the chip object?
     del chip
+
+
+def gpiod_chip_name(chip: POINTER(gpiod_chip)) -> str:
+    """
+    @brief Get the GPIO chip name as represented in the kernel.
+
+    @param chip: The GPIO chip object.
+
+    @return Pointer to a human-readable string containing the chip name.
+    """
+    return chip[0].name.decode()
+
+
+def gpiod_chip_label(chip: POINTER(gpiod_chip)) -> str:
+    """
+    @brief Get the GPIO chip label as represented in the kernel.
+
+    @param chip: The GPIO chip object.
+
+    @return Pointer to a human-readable string containing the chip label.
+    """
+    return chip[0].label.decode()
+
+
+def gpiod_chip_num_lines(chip: POINTER(gpiod_chip)) -> int:
+    """
+    @brief Get the number of GPIO lines exposed by this chip.
+
+    @param chip: The GPIO chip object.
+
+    @return Number of GPIO lines.
+    """
+    return chip[0].num_lines
+
+
+# helpers.c
 
 
 def gpiod_chip_open_by_name(name: str) -> POINTER(gpiod_chip):

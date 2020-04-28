@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from ctypes import set_errno
-from errno import ENODEV, ENOENT, ENOTTY
+from errno import EINVAL, ENODEV, ENOENT, ENOTTY
 from fcntl import ioctl
 from os import (
     access,
@@ -40,7 +40,17 @@ from os.path import basename
 from stat import S_ISCHR
 
 from .time_h import timespec
-from .gpio_h import gpiochip_info, GPIO_GET_CHIPINFO_IOCTL
+from .gpio_h import (
+    gpiochip_info,
+    gpioline_info,
+    GPIOLINE_FLAG_ACTIVE_LOW,
+    GPIOLINE_FLAG_IS_OUT,
+    GPIOLINE_FLAG_KERNEL,
+    GPIOLINE_FLAG_OPEN_DRAIN,
+    GPIOLINE_FLAG_OPEN_SOURCE,
+    GPIO_GET_CHIPINFO_IOCTL,
+    GPIO_GET_LINEINFO_IOCTL,
+)
 
 # pylint: disable=too-few-public-methods
 
@@ -274,7 +284,73 @@ def gpiod_chip_close(chip: gpiod_chip):
 
 
 def gpiod_chip_get_line(chip: gpiod_chip, offset: int) -> gpiod_line:
-    pass
+    """
+    @brief Get the handle to the GPIO line at given offset.
+
+    @param chip:   The GPIO chip object.
+    @param offset: The offset of the GPIO line.
+
+    @return The GPIO line handle or None if an error occured.
+    """
+    if offset < 0 or offset >= chip.num_lines:
+        set_errno(EINVAL)
+        return None
+
+    if chip.lines[offset] is None:
+        line = gpiod_line(chip)
+        line.fd_handle = None
+        line.offset = offset
+
+        chip.lines[offset] = line
+
+    status = gpiod_line_update(chip.lines[offset])
+    if status < 0:
+        return None
+
+    return chip.lines[offset]
+
+
+def gpiod_line_update(line: gpiod_line) -> int:
+    """
+    @brief Re-read the line info.
+
+    @param line: GPIO line object.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+
+    The line info is initially retrieved from the kernel by
+    gpiod_chip_get_line(). Users can use this line to manually re-read the line
+    info.
+    """
+    info = gpioline_info()
+
+    info.line_offset = line.offset
+
+    status = ioctl(line.chip.fd, GPIO_GET_LINEINFO_IOCTL, info)
+    if status < 0:
+        return -1
+
+    line.direction = (
+        GPIOD_LINE_DIRECTION_OUTPUT
+        if info.flags & GPIOLINE_FLAG_IS_OUT
+        else GPIOD_LINE_DIRECTION_INPUT
+    )
+    line.active_state = (
+        GPIOD_LINE_ACTIVE_STATE_LOW
+        if info.flags & GPIOLINE_FLAG_ACTIVE_LOW
+        else GPIOD_LINE_ACTIVE_STATE_HIGH
+    )
+    line.used = bool(info.flags & GPIOLINE_FLAG_KERNEL)
+    line.open_drain = bool(info.flags & GPIOLINE_FLAG_OPEN_DRAIN)
+    line.open_source = bool(info.flags & GPIOLINE_FLAG_OPEN_SOURCE)
+
+    line.name = info.name.decode()
+    line.consumer = info.consumer.decode()
+
+    line.up_to_date = True
+
+    return 0
 
 
 def gpiod_line_request(

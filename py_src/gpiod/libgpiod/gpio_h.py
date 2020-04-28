@@ -35,6 +35,13 @@ class gpiochip_info(Structure):
     ]
 
 
+GPIOLINE_FLAG_KERNEL = 0b0_0001
+GPIOLINE_FLAG_IS_OUT = 0b0_0010
+GPIOLINE_FLAG_ACTIVE_LOW = 0b0_0100
+GPIOLINE_FLAG_OPEN_DRAIN = 0b0_1000
+GPIOLINE_FLAG_OPEN_SOURCE = 0b1_0000
+
+
 class gpioline_info(Structure):
     _fields_ = [
         ("line_offset", c_uint32),

@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-from ctypes import POINTER, pointer, c_int, get_errno
+from ctypes import get_errno
 from datetime import timedelta, datetime
 from errno import ENOENT
 from os import strerror
@@ -68,25 +68,25 @@ open_funcs = {
 }
 
 
-def chip_deleter(chip_p: POINTER(libgpiod.gpiod_chip)):
+def chip_deleter(chip_struct: libgpiod.gpiod_chip):
     # pylint: disable=missing-function-docstring
-    libgpiod.gpiod_chip_close(chip_p)
+    libgpiod.gpiod_chip_close(chip_struct)
 
 
 class shared_chip:
     # pylint: disable=missing-function-docstring, bad-whitespace
-    def __init__(self, chip_p: POINTER(libgpiod.gpiod_chip) = None):
-        self._chip_p = chip_p
+    def __init__(self, chip_struct: libgpiod.gpiod_chip = None):
+        self._chip_struct = chip_struct
 
     def get(self):
-        return self._chip_p
+        return self._chip_struct
 
     def __del__(self):
-        if bool(self._chip_p):
-            chip_deleter(self._chip_p)
+        if self._chip_struct is not None:
+            chip_deleter(self._chip_struct)
 
     def __bool__(self):
-        return bool(self._chip_p)
+        return self._chip_struct is not None
 
 
 class chip:
@@ -95,7 +95,7 @@ class chip:
         self,
         device=None,
         how: int = chip.OPEN_LOOKUP,
-        chip_p: POINTER(libgpiod.gpiod_chip) = None,
+        chip_shared: shared_chip = None,
     ):
         """
         @brief Constructor. Creates an empty GPIO chip object or opens the chip
@@ -109,8 +109,8 @@ class chip:
             c = chip("gpiochip0")
             c = chip("/dev/gpiochip0", chip.OPEN_BY_PATH)
         """
-        if bool(chip_p):
-            self._m_chip = chip_p
+        if bool(chip_shared):
+            self._m_chip = chip_shared
             return
 
         self._m_chip = shared_chip()
@@ -146,8 +146,8 @@ class chip:
 
         func = open_funcs[how]
 
-        chip_p = func(device)
-        if not bool(chip_p):
+        chip_struct = func(device)
+        if chip_struct is None:
             errno = get_errno()
             raise OSError(
                 errno,
@@ -155,7 +155,7 @@ class chip:
                 "cannot open GPIO device {}".format(device),
             )
 
-        self._m_chip = shared_chip(chip_p)
+        self._m_chip = shared_chip(chip_struct)
 
     def reset(self):
         """
@@ -179,7 +179,7 @@ class chip:
         """
         self._throw_if_noref()
 
-        return libgpiod.gpiod_chip_name(self._m_chip.get())
+        return self._m_chip.get().name
 
     @property
     def label(self) -> str:
@@ -193,7 +193,7 @@ class chip:
         """
         self._throw_if_noref()
 
-        return libgpiod.gpiod_chip_label(self._m_chip.get())
+        return self._m_chip.get().label
 
     @property
     def num_lines(self) -> int:
@@ -207,7 +207,7 @@ class chip:
         """
         self._throw_if_noref()
 
-        return libgpiod.gpiod_chip_num_lines(self._m_chip.get())
+        return self._m_chip.get().num_lines
 
     def get_line(self, offset: int) -> line:
         """
@@ -225,15 +225,15 @@ class chip:
         if offset >= self.num_lines or offset < 0:
             raise IndexError("line offset out of range")
 
-        line_p = libgpiod.gpiod_chip_get_line(self._m_chip.get(), offset)
-        if not bool(line_p):
+        line_struct = libgpiod.gpiod_chip_get_line(self._m_chip.get(), offset)
+        if line_struct is None:
             errno = get_errno()
             raise OSError(
                 errno, strerror(errno), "error getting GPIO line from chip"
             )
 
         # Failed to deepcopy due to pointer of ctypes
-        return line(line_p, chip(chip_p=self._m_chip))
+        return line(line_struct, chip(chip_shared=self._m_chip))
 
     def find_line(self, name: str) -> line:
         """
@@ -248,18 +248,18 @@ class chip:
         """
         self._throw_if_noref()
 
-        line_p = libgpiod.gpiod_chip_find_line(
-            self._m_chip.get(), name.encode()
-        )
+        line_struct = libgpiod.gpiod_chip_find_line(self._m_chip.get(), name)
         errno = get_errno()
-        if not bool(line_p) and errno != ENOENT:
+        if line_struct is None and errno != ENOENT:
             raise OSError(
                 errno, strerror(errno), "error looking up GPIO line by name"
             )
 
         # Failed to deepcopy due to pointer of ctypes
         return (
-            line(line_p, chip(chip_p=self._m_chip)) if bool(line_p) else line()
+            line(line_struct, chip(chip_shared=self._m_chip))
+            if bool(line_struct)
+            else line()
         )
 
     def get_lines(self, offsets: List[int]) -> line_bulk:
@@ -355,7 +355,7 @@ class chip:
             print(bool(chip))
             print(not chip)
         """
-        return bool(self._m_chip.get())
+        return self._m_chip.get() is not None
 
     OPEN_LOOKUP = 1
     OPEN_BY_PATH = 2
@@ -408,7 +408,7 @@ reqflag_mapping = {
 class line:
     # pylint: disable=function-redefined, bad-whitespace
     def __init__(
-        self, line_p: POINTER(libgpiod.gpiod_line) = None, owner: chip = chip()
+        self, line_struct: libgpiod.gpiod_line = None, owner: chip = chip()
     ):
         """
         @brief Constructor. Creates an empty line object.
@@ -416,7 +416,7 @@ class line:
         Usage:
             l = line()
         """
-        self._m_line = line_p
+        self._m_line = line_struct
         self._m_chip = owner
 
     def __del__(self):
@@ -439,7 +439,7 @@ class line:
         """
         self._throw_if_null()
 
-        return self._m_line[0].offset
+        return self._m_line.offset
 
     @property
     def name(self) -> str:
@@ -453,7 +453,7 @@ class line:
         """
         self._throw_if_null()
 
-        return self._m_line[0].name.decode()
+        return self._m_line.name
 
     @property
     def consumer(self) -> str:
@@ -468,7 +468,7 @@ class line:
         """
         self._throw_if_null()
 
-        return self._m_line[0].consumer.decode()
+        return self._m_line.consumer
 
     @property
     def direction(self) -> int:
@@ -484,7 +484,7 @@ class line:
 
         return (
             self.DIRECTION_INPUT
-            if self._m_line[0].direction == libgpiod.GPIOD_LINE_DIRECTION_INPUT
+            if self._m_line.direction == libgpiod.GPIOD_LINE_DIRECTION_INPUT
             else self.DIRECTION_OUTPUT
         )
 
@@ -502,7 +502,7 @@ class line:
 
         return (
             self.ACTIVE_HIGH
-            if self._m_line[0].active_state
+            if self._m_line.active_state
             == libgpiod.GPIOD_LINE_ACTIVE_STATE_HIGH
             else self.ACTIVE_LOW
         )
@@ -520,7 +520,7 @@ class line:
         """
         self._throw_if_null()
 
-        return self._m_line[0].used
+        return self._m_line.used
 
     @property
     def is_open_drain(self) -> bool:
@@ -534,7 +534,7 @@ class line:
         """
         self._throw_if_null()
 
-        return self._m_line[0].open_drain
+        return self._m_line.open_drain
 
     @property
     def is_open_source(self) -> bool:
@@ -548,7 +548,7 @@ class line:
         """
         self._throw_if_null()
 
-        return self._m_line[0].open_source
+        return self._m_line.open_source
 
     def request(self, config: line_request, default_val: int = 0):
         """
@@ -568,13 +568,11 @@ class line:
         self._throw_if_null()
 
         conf = libgpiod.gpiod_line_request_config()
-        conf.consumer = config.consumer.encode()
+        conf.consumer = config.consumer
         conf.request_type = reqtype_mapping[config.request_type]
         conf.flags = 0
 
-        rv = libgpiod.gpiod_line_request(
-            self._m_line, pointer(conf), default_val
-        )
+        rv = libgpiod.gpiod_line_request(self._m_line, conf, default_val)
         if rv:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error requesting GPIO line")
@@ -659,11 +657,7 @@ class line:
         """
         self._throw_if_null()
 
-        ts = libgpiod.timespec()
-        ts.tv_sec = (timeout.days * 86400) + timeout.seconds
-        ts.tv_nsec = timeout.microseconds * 1000
-
-        rv = libgpiod.gpiod_line_event_wait(self._m_line, pointer(ts))
+        rv = libgpiod.gpiod_line_event_wait(self._m_line, timeout)
         if rv < 0:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error polling for events")
@@ -689,7 +683,7 @@ class line:
         event_buf = libgpiod.gpiod_line_event()
         event = line_event()
 
-        rv = libgpiod.gpiod_line_event_read(self._m_line, pointer(event_buf))
+        rv = libgpiod.gpiod_line_event_read(self._m_line, event_buf)
         if rv < 0:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error reading line event")
@@ -699,11 +693,7 @@ class line:
         elif event_buf.event_type == libgpiod.GPIOD_LINE_EVENT_FALLING_EDGE:
             event.event_type = line_event.FALLING_EDGE
 
-        event.timestamp = datetime(year=1970, month=1, day=1) + timedelta(
-            days=event_buf.ts.tv_sec // 86400,
-            seconds=event_buf.ts.tv_sec % 86400,
-            microseconds=event_buf.ts.tv_nsec // 1000,
-        )
+        event.timestamp = event_buf.ts
 
         event.source = self
 
@@ -793,7 +783,7 @@ class line:
             print(bool(line))
             print(not line)
         """
-        return bool(self._m_line)
+        return self._m_line is not None
 
     DIRECTION_INPUT = 1
     DIRECTION_OUTPUT = 2
@@ -802,7 +792,7 @@ class line:
     ACTIVE_HIGH = 2
 
     def _throw_if_null(self):
-        if not bool(self._m_line):
+        if self._m_line is None:
             raise RuntimeError("object not holding a GPIO line handle")
 
 
@@ -813,7 +803,7 @@ class line_event:
     FALLING_EDGE = 2
 
     def __init__(self):
-        self.timestamp = timedelta()
+        self.timestamp = datetime()
         self.event_type = 0
         self.source = line()
 
@@ -915,28 +905,20 @@ class line_bulk:
 
         bulk = libgpiod.gpiod_line_bulk()
         event_bulk = libgpiod.gpiod_line_bulk()
-        ts = libgpiod.timespec()
         ret = line_bulk()
 
-        self._to_line_bulk(pointer(bulk))
+        self._to_line_bulk(bulk)
 
         event_bulk.num_lines = 0
 
-        ts.tv_sec = (timeout.days * 86400) + timeout.seconds
-        ts.tv_nsec = timeout.microseconds * 1000
-
-        rv = libgpiod.gpiod_line_event_wait_bulk(
-            pointer(bulk), pointer(ts), pointer(event_bulk)
-        )
+        rv = libgpiod.gpiod_line_event_wait_bulk(bulk, timeout, event_bulk)
         if rv < 0:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error polling for events")
 
         if rv > 0:
             for i in range(event_bulk.num_lines):
-                ret.append(
-                    line(event_bulk.lines[i], self._m_bulk[i].get_chip())
-                )
+                ret.append(line(event_bulk[i], self._m_bulk[i].get_chip()))
 
         return ret
 
@@ -952,9 +934,7 @@ class line_bulk:
         if self.empty:
             raise RuntimeError("line_bulk not holding any GPIO lines")
 
-    def _to_line_bulk(self, bulk: POINTER(libgpiod.gpiod_line_bulk)):
-        bulk[0].num_lines = 0
+    def _to_line_bulk(self, bulk: libgpiod.gpiod_line_bulk):
         for it in self._m_bulk:
             # pylint: disable=protected-access
-            bulk[0].lines[bulk[0].num_lines] = it._m_line
-            bulk[0].num_lines += 1
+            bulk.add(it._m_line)

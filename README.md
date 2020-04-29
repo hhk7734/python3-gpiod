@@ -4,14 +4,9 @@
 
 # python3-gpiod
 
-Ref: <a href="https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git" target=_blank>https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git</a>
+It is a pure Python library and has no dependencies on other packages !!
 
 ## Installation
-
-```shell
-sudo apt update \
-&& sudo apt install -y python3 python3-pip gpiod
-```
 
 ```shell
 python3 -m pip install -U --user pip gpiod

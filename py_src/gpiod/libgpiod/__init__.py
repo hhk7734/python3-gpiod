@@ -836,7 +836,23 @@ def gpiod_line_event_read(line: gpiod_line, event: gpiod_line_event) -> int:
 
 
 def gpiod_line_event_get_fd(line: gpiod_line) -> int:
-    pass
+    """
+    @brief Get the event file descriptor.
+
+    @param line: GPIO line object.
+
+    @return Number of the event file descriptor or -1 if the user tries to
+            retrieve the descriptor from a line that wasn't configured for
+            event monitoring.
+
+    Users may want to poll the event file descriptor on their own. This routine
+    allows to access it.
+    """
+    if line.state != _LINE_REQUESTED_EVENTS:
+        set_errno(EPERM)
+        return -1
+
+    return line.fd_handle.fd
 
 
 def gpiod_line_event_read_fd(fd: int, event: gpiod_line_event) -> int:

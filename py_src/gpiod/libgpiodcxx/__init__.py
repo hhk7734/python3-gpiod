@@ -803,7 +803,7 @@ class line_event:
     FALLING_EDGE = 2
 
     def __init__(self):
-        self.timestamp = datetime()
+        self.timestamp = None
         self.event_type = 0
         self.source = line()
 
@@ -908,8 +908,6 @@ class line_bulk:
         ret = line_bulk()
 
         self._to_line_bulk(bulk)
-
-        event_bulk.num_lines = 0
 
         rv = libgpiod.gpiod_line_event_wait_bulk(bulk, timeout, event_bulk)
         if rv < 0:

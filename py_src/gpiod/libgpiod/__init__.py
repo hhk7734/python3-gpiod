@@ -984,7 +984,29 @@ def gpiod_chip_open_lookup(descr) -> gpiod_chip:
 
 
 def gpiod_chip_find_line(chip: gpiod_chip, name: str) -> gpiod_line:
-    pass
+    """
+    @brief Find a GPIO line by name among lines associated with given GPIO chip.
+
+    @param chip: The GPIO chip object.
+    @param name: The name of the GPIO line.
+
+    @return The GPIO line handle or None if the line could not be found or an
+            error occurred.
+
+    @note In case a line with given name is not associated with given chip, the
+          function sets errno to ENOENT.
+    """
+    line_iter = gpiod_line_iter(chip)
+    if line_iter is None:
+        return None
+
+    for line in line_iter:
+        if line.name and line.name == name:
+            return line
+
+    set_errno(ENOENT)
+
+    return None
 
 
 # iter.c

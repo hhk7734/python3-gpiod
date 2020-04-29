@@ -1,3 +1,10 @@
+python3-gpiod (1.2.3) unstable; urgency=medium
+
+  * github: fix pylint option
+  * README: remove gpiod installation
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Wed, 29 Apr 2020 17:25:39 +0900
+
 python3-gpiod (1.2.2) unstable; urgency=medium
 
   * github: add python lint action

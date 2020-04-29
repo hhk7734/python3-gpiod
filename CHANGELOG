@@ -1,3 +1,11 @@
+python3-gpiod (1.2.2) unstable; urgency=medium
+
+  * github: add python lint action
+  * libgpiod: implement gpio.h and ioctl.h
+  * Fix huge amount of functions to remove libgpiod dependency
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Wed, 29 Apr 2020 17:00:49 +0900
+
 python3-gpiod (1.2.1) unstable; urgency=medium
 
   * libgpiodcxx: document line class

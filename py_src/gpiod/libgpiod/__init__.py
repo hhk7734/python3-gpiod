@@ -21,6 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+
+# pylint: disable=too-many-lines
+
 from ctypes import memmove, pointer, set_errno, sizeof
 from datetime import datetime, timedelta
 from errno import EBUSY, EINVAL, EIO, ENODEV, ENOENT, ENOTTY, EPERM
@@ -1042,3 +1045,21 @@ class gpiod_chip_iter:
             return self.chips[index]
 
         raise StopIteration
+
+
+class gpiod_line_iter:
+    def __init__(self, chip: gpiod_chip):
+        self.chip = chip
+
+        self.lines = []
+        self.offset = 0
+
+    def __iter__(self):
+        # gpiod_line_iter_new(chip)
+        for i in range(self.chip.num_lines):
+            self.lines.append(gpiod_chip_get_line(self.chip, i))
+            if self.lines[i] is None:
+                del self.lines
+                return None
+
+        return self.lines.__iter__()

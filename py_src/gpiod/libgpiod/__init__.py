@@ -133,8 +133,8 @@ _LINE_REQUESTED_EVENTS = 2
 
 
 class line_fd_handle:
-    def __init__(self):
-        self.fd = 0
+    def __init__(self, fd):
+        self.fd = fd
 
     def __del__(self):
         # line_fd_decref(line)
@@ -458,8 +458,7 @@ def _line_request_values(
     if status < 0:
         return -1
 
-    line_fd = line_fd_handle()
-    line_fd.fd = req.fd
+    line_fd = line_fd_handle(req.fd)
 
     for it in bulk:
         it.state = _LINE_REQUESTED_VALUES
@@ -470,10 +469,56 @@ def _line_request_values(
     return 0
 
 
+def _line_request_event_single(
+    line: gpiod_line, config: gpiod_line_request_config
+) -> int:
+    # pylint: disable=no-member
+    req = gpioevent_request()
+    if config.consumer:
+        req.consumer_label = config.consumer[:32].encode()
+
+    req.lineoffset = line.offset
+    req.handleflags |= GPIOHANDLE_REQUEST_INPUT
+
+    if config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN:
+        req.flags |= GPIOHANDLE_REQUEST_OPEN_DRAIN
+    if config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE:
+        req.flags |= GPIOHANDLE_REQUEST_OPEN_SOURCE
+    if config.flags & GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW:
+        req.flags |= GPIOHANDLE_REQUEST_ACTIVE_LOW
+
+    if config.request_type == GPIOD_LINE_REQUEST_EVENT_RISING_EDGE:
+        req.eventflags |= GPIOEVENT_REQUEST_RISING_EDGE
+    elif config.request_type == GPIOD_LINE_REQUEST_EVENT_FALLING_EDGE:
+        req.eventflags |= GPIOEVENT_REQUEST_FALLING_EDGE
+    elif config.request_type == GPIOD_LINE_REQUEST_EVENT_BOTH_EDGES:
+        req.eventflags |= GPIOEVENT_REQUEST_BOTH_EDGES
+
+    status = ioctl(line.chip.fd, GPIO_GET_LINEEVENT_IOCTL, req)
+    if status < 0:
+        return -1
+
+    line_fd = line_fd_handle(req.fd)
+
+    line.state = _LINE_REQUESTED_EVENTS
+    line.fd_handle = line_fd
+    _line_maybe_update(line)
+
+    return 0
+
+
 def _line_request_events(
     bulk: gpiod_line_bulk, config: gpiod_line_request_config
 ) -> int:
-    pass
+    for i in range(bulk.num_lines):
+        status = _line_request_event_single(bulk[i], config)
+        if status < 0:
+            for j in range(i):
+                gpiod_line_release(bulk[j])
+
+            return -1
+
+    return 0
 
 
 def gpiod_line_request(

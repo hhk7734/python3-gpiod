@@ -21,9 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-from ctypes import set_errno
+from ctypes import memmove, pointer, set_errno, sizeof
 from datetime import datetime, timedelta
-from errno import EBUSY, EINVAL, ENODEV, ENOENT, ENOTTY, EPERM
+from errno import EBUSY, EINVAL, EIO, ENODEV, ENOENT, ENOTTY, EPERM
 from fcntl import ioctl
 from os import (
     access,
@@ -34,6 +34,7 @@ from os import (
     open as os_open,
     O_CLOEXEC,
     O_RDWR,
+    read as os_read,
     R_OK,
     scandir,
 )
@@ -123,7 +124,7 @@ GPIOD_LINE_EVENT_FALLING_EDGE = 2
 
 class gpiod_line_event:
     def __init__(self):
-        self.ts = datetime()
+        self.ts = None
         self.event_type = 0
 
 
@@ -817,11 +818,69 @@ def gpiod_line_event_wait_bulk(
 
 
 def gpiod_line_event_read(line: gpiod_line, event: gpiod_line_event) -> int:
-    pass
+    """
+    @brief Read the last event from the GPIO line.
+
+    @param line:  GPIO line object.
+    @param event: Buffer to which the event data will be copied.
+
+    @return 0 if the event was read correctly, -1 on error.
+
+    @note This function will block if no event was queued for this line.
+    """
+    if line.state != _LINE_REQUESTED_EVENTS:
+        set_errno(EPERM)
+        return -1
+
+    return gpiod_line_event_read_fd(line.fd_handle.fd, event)
 
 
 def gpiod_line_event_get_fd(line: gpiod_line) -> int:
     pass
+
+
+def gpiod_line_event_read_fd(fd: int, event: gpiod_line_event) -> int:
+    """
+    @brief Read the last GPIO event directly from a file descriptor.
+
+    @param fd:    File descriptor.
+    @param event: Buffer in which the event data will be stored.
+
+    @return 0 if the event was read correctly, -1 on error.
+
+    Users who directly poll the file descriptor for incoming events can also
+    directly read the event data from it using this routine. This function
+    translates the kernel representation of the event to the libgpiod format.
+    """
+    evdata = gpioevent_data()
+
+    try:
+        rd = os_read(fd, sizeof(evdata))
+    except OSError:
+        return -1
+
+    print(rd)
+
+    if len(rd) != sizeof(evdata):
+        set_errno(EIO)
+        return -1
+
+    memmove(pointer(evdata), rd, sizeof(evdata))
+
+    event.event_type = (
+        GPIOD_LINE_EVENT_RISING_EDGE
+        if evdata.id == GPIOEVENT_EVENT_RISING_EDGE
+        else GPIOD_LINE_EVENT_FALLING_EDGE
+    )
+
+    sec = evdata.timestamp / 1_000_000_000
+    event.ts = datetime(year=1970, month=1, day=1) + timedelta(
+        days=sec // 86400,
+        seconds=sec % 86400,
+        microseconds=(evdata.timestamp % 1_000_000_000) // 1000,
+    )
+
+    return 0
 
 
 # helpers.c

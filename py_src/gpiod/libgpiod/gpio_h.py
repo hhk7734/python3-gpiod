@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-from ctypes import c_char, c_uint8, c_uint32, c_int, Structure
+from ctypes import c_char, c_uint8, c_uint32, c_uint64, c_int, Structure
 from .ioctl_h import _IOR, _IOWR
 
 # pylint: disable=too-few-public-methods
@@ -89,13 +89,23 @@ GPIOEVENT_REQUEST_BOTH_EDGES = (
 
 
 class gpioevent_request(Structure):
-    _pack_ = 1
     _fields_ = [
         ("lineoffset", c_uint32),
         ("handleflags", c_uint32),
         ("eventflags", c_uint32),
         ("consumer_label", c_char * 32),
         ("fd", c_int),
+    ]
+
+
+GPIOEVENT_EVENT_RISING_EDGE = 0b01
+GPIOEVENT_EVENT_FALLING_EDGE = 0b10
+
+
+class gpioevent_data(Structure):
+    _fields_ = [
+        ("timestamp", c_uint64),
+        ("id", c_uint32),
     ]
 
 

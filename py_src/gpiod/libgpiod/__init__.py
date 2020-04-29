@@ -878,8 +878,6 @@ def gpiod_line_event_read_fd(fd: int, event: gpiod_line_event) -> int:
     except OSError:
         return -1
 
-    print(rd)
-
     if len(rd) != sizeof(evdata):
         set_errno(EIO)
         return -1

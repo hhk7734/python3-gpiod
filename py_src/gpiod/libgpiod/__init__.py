@@ -38,6 +38,8 @@ from os import (
     scandir,
 )
 from os.path import basename
+import select
+from select import POLLIN, POLLNVAL, POLLPRI
 from stat import S_ISCHR
 from typing import List
 
@@ -747,13 +749,71 @@ def gpiod_line_set_value_bulk(bulk: gpiod_line_bulk, values: List[int]) -> int:
 
 
 def gpiod_line_event_wait(line: gpiod_line, timeout: timedelta) -> int:
-    pass
+    """
+    @brief Wait for an event on a single line.
+
+    @param line:    GPIO line object.
+    @param timeout: Wait time limit.
+
+    @return 0 if wait timed out, -1 if an error occurred, 1 if an event
+            occurred.
+    """
+    bulk = gpiod_line_bulk()
+
+    bulk.add(line)
+
+    return gpiod_line_event_wait_bulk(bulk, timeout, None)
 
 
 def gpiod_line_event_wait_bulk(
     bulk: gpiod_line_bulk, timeout: timedelta, event_bulk: gpiod_line_bulk
 ) -> int:
-    pass
+    """
+    @brief Wait for events on a set of lines.
+
+    @param bulk:       Set of GPIO lines to monitor.
+    @param timeout:    Wait time limit.
+    @param event_bulk: Bulk object in which to store the line handles on which
+                       events occurred. Can be None.
+
+    @return 0 if wait timed out, -1 if an error occurred, 1 if at least one
+            event occurred.
+    """
+    if not _line_bulk_same_chip(bulk) or not _line_bulk_all_requested(bulk):
+        return -1
+
+    poll = select.poll()
+    fd_to_line = {}
+
+    for it in bulk:
+        poll.register(it.fd_handle.fd, POLLIN | POLLPRI)
+        fd_to_line[it.fd_handle.fd] = it
+
+    timeout_ms = (
+        (timeout.days * 86_400_000)
+        + (timeout.seconds * 1_000)
+        + (timeout.microseconds / 1000.0)
+    )
+
+    revents = poll.poll(timeout_ms)
+
+    if revents is None:
+        return -1
+    if len(revents) == 0:
+        return 0
+
+    for it in revents:
+        fd = it[0]
+        revent = it[1]
+        if revent:
+            if revent & POLLNVAL:
+                set_errno(EINVAL)
+                return -1
+
+            if event_bulk is not None:
+                event_bulk.add(fd_to_line[fd])
+
+    return 1
 
 
 def gpiod_line_event_read(line: gpiod_line, event: gpiod_line_event) -> int:

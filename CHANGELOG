@@ -1,3 +1,11 @@
+python3-gpiod (1.2.4) unstable; urgency=medium
+
+  * libgpiod: implement gpiod_chip_iter.next_noclose
+  * libgpiodcxx: implement chip/line_iter
+  * libgpiodcxx: implement find_line
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 07 May 2020 13:34:04 +0900
+
 python3-gpiod (1.2.3) unstable; urgency=medium
 
   * github: fix pylint option

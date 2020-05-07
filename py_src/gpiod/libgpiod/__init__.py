@@ -936,7 +936,6 @@ class gpiod_line_iter:
         self.chip = chip
 
         self.lines = []
-        self.offset = 0
 
     def __iter__(self):
         # gpiod_line_iter_new(chip)

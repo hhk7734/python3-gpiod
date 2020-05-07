@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from copy import copy
 from ctypes import get_errno
 from datetime import timedelta, datetime
 from errno import ENOENT
@@ -232,8 +233,7 @@ class chip:
                 errno, strerror(errno), "error getting GPIO line from chip"
             )
 
-        # Failed to deepcopy due to pointer of ctypes
-        return line(line_struct, chip(chip_shared=self._m_chip))
+        return line(line_struct, copy(self))
 
     def find_line(self, name: str) -> line:
         """
@@ -255,12 +255,7 @@ class chip:
                 errno, strerror(errno), "error looking up GPIO line by name"
             )
 
-        # Failed to deepcopy due to pointer of ctypes
-        return (
-            line(line_struct, chip(chip_shared=self._m_chip))
-            if bool(line_struct)
-            else line()
-        )
+        return line(line_struct, copy(self)) if bool(line_struct) else line()
 
     def get_lines(self, offsets: List[int]) -> line_bulk:
         """

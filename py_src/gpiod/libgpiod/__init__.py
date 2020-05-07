@@ -893,7 +893,26 @@ class gpiod_chip_iter:
 
         return self
 
-    def __next__(self):
+    def next_noclose(self) -> gpiod_chip:
+        """
+        gpiod_chip_iter_next_noclose()
+
+        @brief Get the next gpiochip handle without closing the previous one.
+
+        @return The next open gpiochip handle or raise StopIteration if no more
+                chips are present in the system.
+
+        @note This function works just like ::gpiod_chip_iter_next but doesn't
+              close the most recently opened chip handle.
+        """
+        if self.offset < len(self.chips):
+            index = self.offset
+            self.offset += 1
+            return self.chips[index]
+
+        raise StopIteration
+
+    def __next__(self) -> gpiod_chip:
         """
         gpiod_chip_iter_next()
 
@@ -908,13 +927,7 @@ class gpiod_chip_iter:
             gpiod_chip_close(self.chips[self.offset - 1])
             self.chips[self.offset - 1] = None
 
-        # gpiod_chip_iter_next_noclose
-        if self.offset < len(self.chips):
-            index = self.offset
-            self.offset += 1
-            return self.chips[index]
-
-        raise StopIteration
+        return self.next_noclose()
 
 
 class gpiod_line_iter:

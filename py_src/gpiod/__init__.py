@@ -36,6 +36,23 @@ class line_bulk(libgpiodcxx.line_bulk):
     pass
 
 
+def find_line(name: str) -> line:
+    """
+    @brief Find a GPIO line by name. Search all GPIO chips present on the
+           system.
+
+    @param name: Name of the line.
+
+    @return A line object - empty if the line was not found.
+    """
+    for c in chip_iter():
+        ret = c.find_line(name)
+        if bool(ret):
+            return ret
+
+    return ret
+
+
 class line_event(libgpiodcxx.line_event):
     # pylint: disable=too-few-public-methods
     pass

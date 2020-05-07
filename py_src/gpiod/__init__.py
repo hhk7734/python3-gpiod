@@ -44,3 +44,27 @@ class line_event(libgpiodcxx.line_event):
 class line_request(libgpiodcxx.line_request):
     # pylint: disable=too-few-public-methods
     pass
+
+
+class chip_iter(libgpiodcxx.chip_iter):
+    # pylint: disable=too-few-public-methods
+    pass
+
+
+def make_chip_iter() -> chip_iter:
+    """
+    @brief Create a new chip_iter.
+
+    @return New chip iterator object pointing to the first GPIO chip on the
+            system.
+
+    Usage:
+        for c in make_chip_iter():
+            print(c.label)
+    """
+    return chip_iter().__iter__()
+
+
+class line_iter(libgpiodcxx.line_iter):
+    # pylint: disable=too-few-public-methods
+    pass

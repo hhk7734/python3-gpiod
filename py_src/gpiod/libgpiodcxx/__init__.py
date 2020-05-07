@@ -936,3 +936,62 @@ class line_bulk:
         for it in self._m_bulk:
             # pylint: disable=protected-access
             bulk.add(it._m_line)
+
+
+class chip_iter:
+    """
+    @brief Allows to iterate over all GPIO chips present on the system.
+
+    Usage:
+        for c in chip_iter():
+            print(c.name)
+    """
+
+    def __init__(self):
+        self._iter = None
+
+    def __iter__(self):
+        self._iter = libgpiod.gpiod_chip_iter().__iter__()
+        if self._iter is None:
+            errno = get_errno()
+            raise OSError(
+                errno, strerror(errno), "error creating GPIO chip iterator"
+            )
+
+        return self
+
+    def __next__(self) -> chip:
+        _next = self._iter.next_noclose()
+        return chip(chip_shared=shared_chip(_next))
+
+
+class line_iter:
+    """
+    @brief Allows to iterate over all lines owned by a GPIO chip.
+
+    @param owner: Chip owning the GPIO lines over which we want to iterate.
+
+    Usage:
+        for l in line_iter(chip):
+            print("{}: {}".format(l.offset, l.name))
+    """
+
+    def __init__(self, owner: chip):
+        self._chip = owner
+
+        self._iter = None
+
+    def __iter__(self):
+        self._iter = libgpiod.gpiod_line_iter(
+            self._chip._m_chip.get()
+        ).__iter__()
+        if self._iter is None:
+            errno = get_errno()
+            raise OSError(
+                errno, strerror(errno), "error creating GPIO line iterator"
+            )
+
+        return self
+
+    def __next__(self) -> line:
+        return line(self._iter.__next__(), self._chip)

@@ -807,12 +807,39 @@ class line_bulk:
     # pylint: disable=function-redefined
     # pylint: disable=missing-function-docstring
     def __init__(self, lines: List[line] = None):
+        """
+        @brief Constructor. Creates a empty line_bulk or from a list of lines.
+
+        @param lines: List of gpiod::line objects.
+
+        @note All lines must be owned by the same GPIO chip.
+
+        Usage:
+            bulk = line_bulk()
+            bulk = line_bulk([line1, line2])
+        """
         self._m_bulk = lines if lines is not None else []
 
     def __del__(self):
-        pass
+        """
+        @brief Destructor
+
+        Usage:
+            del bulk
+        """
 
     def append(self, new_line: line):
+        """
+        @brief Add a line to this line_bulk object.
+
+        @param new_line: Line to add.
+
+        @note The new line must be owned by the same chip as all the other
+              lines already held by this line_bulk object.
+
+        Usage:
+            bulk.append(line1)
+        """
         if not new_line:
             raise ValueError("line_bulk cannot hold empty line objects")
 
@@ -830,26 +857,91 @@ class line_bulk:
         self._m_bulk.append(new_line)
 
     def get(self, offset: int) -> line:
+        """
+        @brief Get the line at given offset.
+
+        @param offset: Offset of the line to get.
+
+        @return Reference to the line object.
+
+        Usage:
+            line1 = bulk.get(1)
+        """
         return self._m_bulk[offset]
 
     def __getitem__(self, offset: int) -> line:
+        """
+        @brief Get the line at given offset.
+
+        @param offset: Offset of the line to get.
+
+        @return Reference to the line object.
+
+        Usage:
+            line1 = bulk[1]
+        """
         return self._m_bulk[offset]
 
     @property
     def size(self) -> int:
+        """
+        @brief Get the number of lines currently held by this object.
+
+        @return Number of elements in this line_bulk.
+
+        Usage:
+            print(bulk.size)
+        """
         return len(self._m_bulk)
 
     def __len__(self) -> int:
+        """
+        @brief Get the number of lines currently held by this object.
+
+        @return Number of elements in this line_bulk.
+
+        Usage:
+            print(len(bulk))
+        """
         return len(self._m_bulk)
 
     @property
     def empty(self) -> bool:
+        """
+        @brief Check if this line_bulk doesn't hold any lines.
+
+        @return True if this object is empty, false otherwise.
+
+        Usage:
+            print(bulk.empty)
+        """
         return len(self._m_bulk) == 0
 
     def clear(self):
-        self._m_bulk = []
+        """
+        @brief Remove all lines from this object.
+
+        Usage:
+            bulk.clear()
+        """
+        self._m_bulk.clear()
 
     def request(self, config: line_request, default_vals: List[int] = None):
+        """
+        @brief Request all lines held by this object.
+
+        @param config:       Request config (see gpiod::line_request).
+        @param default_vals: List of default values. Only relevant for output
+                             direction requests.
+
+        Usage:
+            config = line_request()
+            config.consumer = "Application"
+            config.request_type = line_request.DIRECTION_OUTPUT
+
+            # bulk.request(config)
+            bulk.request(config, [1] * bulk.size)
+        """
         self._throw_if_empty()
 
         if default_vals is None:
@@ -869,12 +961,27 @@ class line_bulk:
             raise error
 
     def release(self):
+        """
+        @brief Release all lines held by this object.
+
+        Usage:
+            bulk.release()
+        """
         self._throw_if_empty()
 
         for it in self._m_bulk:
             it.release()
 
     def get_values(self) -> List[int]:
+        """
+        @brief Read values from all lines held by this object.
+
+        @return List containing line values the order of which corresponds
+                with the order of lines in the internal array.
+
+        Usage:
+            ret = bulk.get_values()
+        """
         self._throw_if_empty()
 
         values = []
@@ -884,6 +991,15 @@ class line_bulk:
         return values
 
     def set_values(self, values: List[int]):
+        """
+        @brief Set values of all lines held by this object.
+
+        @param values: List of values to set. Must be the same size as the
+               number of lines held by this line_bulk.
+
+        Usage:
+            bulk.set)_blaues([1] * bulk.size)
+        """
         self._throw_if_empty()
 
         if self.size != len(values):
@@ -896,6 +1012,17 @@ class line_bulk:
             self._m_bulk[i].set_value(values[i])
 
     def event_wait(self, timeout: timedelta) -> line_bulk:
+        """
+        @brief Poll the set of lines for line events.
+
+        @param timeout: timedelta to wait before returning an empty line_bulk.
+
+        @return Returns a line_bulk object containing lines on which events
+                occurred.
+
+        Usage:
+            ebulk = bulk.event_wait(timedelta(microseconds=20000))
+        """
         self._throw_if_empty()
 
         bulk = libgpiod.gpiod_line_bulk()
@@ -916,11 +1043,27 @@ class line_bulk:
         return ret
 
     def __bool__(self) -> bool:
+        """
+        @brief Check if this object holds any lines.
+
+        @return True if this line_bulk holds at least one line, false otherwise.
+
+        Usage:
+            print(bool(bulk))
+            print(not bulk)
+        """
         return not self.empty
 
     MAX_LINES = libgpiod.GPIOD_LINE_BULK_MAX_LINES
 
     def __iter__(self) -> [].__iter__():
+        """
+        @brief Iterator for iterating over lines held by line_bulk.
+
+        Usage:
+            for l in bulk:
+                print(l.name)
+        """
         return self._m_bulk.__iter__()
 
     def _throw_if_empty(self):

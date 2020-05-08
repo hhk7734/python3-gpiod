@@ -30,6 +30,8 @@ from typing import List
 
 from .. import libgpiod
 
+# pylint: disable=too-many-lines
+
 
 class chip:
     # pylint: disable=too-few-public-methods
@@ -1054,7 +1056,12 @@ class line_bulk:
         """
         return not self.empty
 
-    MAX_LINES = libgpiod.GPIOD_LINE_BULK_MAX_LINES
+    @property
+    def MAX_LINES(self) -> int:
+        """
+        @brief Max number of lines that this object can hold.
+        """
+        return libgpiod.GPIOD_LINE_BULK_MAX_LINES
 
     def __iter__(self) -> [].__iter__():
         """

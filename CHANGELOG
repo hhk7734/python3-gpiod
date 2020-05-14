@@ -1,3 +1,10 @@
+python3-gpiod (1.2.5) unstable; urgency=medium
+
+  * libgpiodcxx: document line_bulk class
+  * libgpiodcxx: change line_bulk.MAX_LINES to property
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 14 May 2020 12:21:46 +0900
+
 python3-gpiod (1.2.4) unstable; urgency=medium
 
   * libgpiod: implement gpiod_chip_iter.next_noclose

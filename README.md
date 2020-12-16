@@ -8,6 +8,8 @@ It is a pure Python library and has no dependencies on other packages !!
 
 Docs: [https://wiki.loliot.net/docs/lang/python/libraries/gpiod/python-gpiod-about](https://wiki.loliot.net/docs/lang/python/libraries/gpiod/python-gpiod-about)
 
+libgpiod: [https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git/](https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git/)
+
 ## Installation
 
 ```shell

@@ -33,4 +33,4 @@ with open(CHANGELOG_PATH, "r") as f:
     version = version.split()
     version = version[1][1:-1]
 
-setup(version=version,)
+setup(version=version)

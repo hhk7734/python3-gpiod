@@ -399,8 +399,10 @@ reqflag_mapping = {
 class line:
     # pylint: disable=function-redefined
     def __init__(
-        self, line_struct: libgpiod.gpiod_line = None, owner: chip = chip()
-    ):
+        self,
+        line_struct: Optional[libgpiod.gpiod_line] = None,
+        owner: chip = chip(),
+    ) -> None:
         """
         @brief Constructor. Creates an empty line object.
 
@@ -428,9 +430,7 @@ class line:
         Usage:
             print(line.offset)
         """
-        self._throw_if_null()
-
-        return self._m_line.offset
+        return self._throw_if_null_and_get_m_line().offset
 
     @property
     def name(self) -> str:
@@ -442,9 +442,7 @@ class line:
         Usage:
             print(line.name)
         """
-        self._throw_if_null()
-
-        return self._m_line.name
+        return self._throw_if_null_and_get_m_line().name
 
     @property
     def consumer(self) -> str:
@@ -457,9 +455,7 @@ class line:
         Usage:
             print(line.consumer)
         """
-        self._throw_if_null()
-
-        return self._m_line.consumer
+        return self._throw_if_null_and_get_m_line().consumer
 
     @property
     def direction(self) -> int:
@@ -471,11 +467,10 @@ class line:
         Usage:
             print(line.direction == line.DIRECTION_INPUT)
         """
-        self._throw_if_null()
-
         return (
             self.DIRECTION_INPUT
-            if self._m_line.direction == libgpiod.GPIOD_LINE_DIRECTION_INPUT
+            if self._throw_if_null_and_get_m_line().direction
+            == libgpiod.GPIOD_LINE_DIRECTION_INPUT
             else self.DIRECTION_OUTPUT
         )
 
@@ -489,11 +484,9 @@ class line:
         Usage:
             print(line.active_state == line.ACTIVE_HIGH)
         """
-        self._throw_if_null()
-
         return (
             self.ACTIVE_HIGH
-            if self._m_line.active_state
+            if self._throw_if_null_and_get_m_line().active_state
             == libgpiod.GPIOD_LINE_ACTIVE_STATE_HIGH
             else self.ACTIVE_LOW
         )
@@ -509,9 +502,7 @@ class line:
         Usage:
             print(line.is_used)
         """
-        self._throw_if_null()
-
-        return self._m_line.used
+        return self._throw_if_null_and_get_m_line().used
 
     @property
     def is_open_drain(self) -> bool:
@@ -523,9 +514,7 @@ class line:
         Usage:
             print(line.is_open_drain)
         """
-        self._throw_if_null()
-
-        return self._m_line.open_drain
+        return self._throw_if_null_and_get_m_line().open_drain
 
     @property
     def is_open_source(self) -> bool:
@@ -537,9 +526,7 @@ class line:
         Usage:
             print(line.is_open_source)
         """
-        self._throw_if_null()
-
-        return self._m_line.open_source
+        return self._throw_if_null_and_get_m_line().open_source
 
     def request(self, config: line_request, default_val: int = 0):
         """
@@ -556,14 +543,14 @@ class line:
             # line.request(config)
             line.request(config, 1)
         """
-        self._throw_if_null()
+        _m_line = self._throw_if_null_and_get_m_line()
 
         conf = libgpiod.gpiod_line_request_config()
         conf.consumer = config.consumer
         conf.request_type = reqtype_mapping[config.request_type]
         conf.flags = 0
 
-        rv = libgpiod.gpiod_line_request(self._m_line, conf, default_val)
+        rv = libgpiod.gpiod_line_request(_m_line, conf, default_val)
         if rv:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error requesting GPIO line")
@@ -575,9 +562,7 @@ class line:
         Usage:
             line.release()
         """
-        self._throw_if_null()
-
-        libgpiod.gpiod_line_release(self._m_line)
+        libgpiod.gpiod_line_release(self._throw_if_null_and_get_m_line())
 
     @property
     def is_requested(self) -> bool:
@@ -589,9 +574,9 @@ class line:
         Usage:
             print(line.is_requested)
         """
-        self._throw_if_null()
-
-        return libgpiod.gpiod_line_is_requested(self._m_line)
+        return libgpiod.gpiod_line_is_requested(
+            self._throw_if_null_and_get_m_line()
+        )
 
     def get_value(self) -> int:
         """
@@ -602,9 +587,7 @@ class line:
         Usage:
             val = line.get_value()
         """
-        self._throw_if_null()
-
-        rv = libgpiod.gpiod_line_get_value(self._m_line)
+        rv = libgpiod.gpiod_line_get_value(self._throw_if_null_and_get_m_line())
         if rv == -1:
             errno = get_errno()
             raise OSError(
@@ -622,9 +605,9 @@ class line:
         Usage:
             line.set_value(1)
         """
-        self._throw_if_null()
-
-        rv = libgpiod.gpiod_line_set_value(self._m_line, val)
+        rv = libgpiod.gpiod_line_set_value(
+            self._throw_if_null_and_get_m_line(), val
+        )
         if rv:
             errno = get_errno()
             raise OSError(
@@ -646,9 +629,9 @@ class line:
             else:
                 print("Timeout")
         """
-        self._throw_if_null()
-
-        rv = libgpiod.gpiod_line_event_wait(self._m_line, timeout)
+        rv = libgpiod.gpiod_line_event_wait(
+            self._throw_if_null_and_get_m_line(), timeout
+        )
         if rv < 0:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error polling for events")
@@ -669,12 +652,12 @@ class line:
             else:
                 print("Timeout")
         """
-        self._throw_if_null()
+        _m_line = self._throw_if_null_and_get_m_line()
 
         event_buf = libgpiod.gpiod_line_event()
         event = line_event()
 
-        rv = libgpiod.gpiod_line_event_read(self._m_line, event_buf)
+        rv = libgpiod.gpiod_line_event_read(_m_line, event_buf)
         if rv < 0:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error reading line event")
@@ -699,9 +682,9 @@ class line:
         Usage:
             fd = line.event_get_fd()
         """
-        self._throw_if_null()
-
-        ret = libgpiod.gpiod_line_event_get_fd(self._m_line)
+        ret = libgpiod.gpiod_line_event_get_fd(
+            self._throw_if_null_and_get_m_line()
+        )
 
         if ret < 0:
             errno = get_errno()
@@ -782,9 +765,10 @@ class line:
     ACTIVE_LOW = 1
     ACTIVE_HIGH = 2
 
-    def _throw_if_null(self):
+    def _throw_if_null_and_get_m_line(self) -> libgpiod.gpiod_line:
         if self._m_line is None:
             raise RuntimeError("object not holding a GPIO line handle")
+        return self._m_line
 
 
 class line_event:

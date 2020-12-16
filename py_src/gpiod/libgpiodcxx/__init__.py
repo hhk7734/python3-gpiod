@@ -23,7 +23,7 @@ SOFTWARE.
 """
 from copy import copy
 from ctypes import get_errno
-from datetime import timedelta, datetime
+from datetime import timedelta
 from errno import ENOENT
 from os import strerror
 from typing import List

@@ -26,7 +26,7 @@ from ctypes import get_errno
 from datetime import timedelta
 from errno import ENOENT
 from os import strerror
-from typing import List
+from typing import List, Optional, Union
 
 from .. import libgpiod
 
@@ -77,7 +77,7 @@ def chip_deleter(chip_struct: libgpiod.gpiod_chip):
 
 
 class shared_chip:
-    # pylint: disable=missing-function-docstring, bad-whitespace
+    # pylint: disable=missing-function-docstring
     def __init__(self, chip_struct: libgpiod.gpiod_chip = None):
         self._chip_struct = chip_struct
 
@@ -93,13 +93,13 @@ class shared_chip:
 
 
 class chip:
-    # pylint: disable=function-redefined, bad-whitespace
+    # pylint: disable=function-redefined
     def __init__(
         self,
-        device=None,
+        device: Optional[Union[int, str]] = None,
         how: int = chip.OPEN_LOOKUP,
-        chip_shared: shared_chip = None,
-    ):
+        chip_shared: Optional[shared_chip] = None,
+    ) -> None:
         """
         @brief Constructor. Creates an empty GPIO chip object or opens the chip
                 using chip.open.
@@ -128,7 +128,9 @@ class chip:
             del chip
         """
 
-    def open(self, device, how: int = chip.OPEN_LOOKUP):
+    def open(
+        self, device: Union[int, str], how: int = chip.OPEN_LOOKUP
+    ) -> None:
         """
         @brief Open a GPIO chip.
 
@@ -142,11 +144,7 @@ class chip:
             chip.open("/dev/gpiochip0")
             chip.open(0, chip.OPEN_BY_NUMBER)
         """
-        if how == chip.OPEN_BY_NUMBER:
-            device = int(device)
-        else:
-            device = str(device)
-
+        device = str(device)
         func = open_funcs[how]
 
         chip_struct = func(device)
@@ -403,7 +401,7 @@ reqflag_mapping = {
 
 
 class line:
-    # pylint: disable=function-redefined, bad-whitespace
+    # pylint: disable=function-redefined
     def __init__(
         self, line_struct: libgpiod.gpiod_line = None, owner: chip = chip()
     ):

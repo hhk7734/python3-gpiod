@@ -42,7 +42,7 @@ from os.path import basename
 import select
 from select import POLLIN, POLLNVAL, POLLPRI
 from stat import S_ISCHR
-from typing import List, Union
+from typing import Iterator, List, Union
 
 from .gpio_h import *
 from .gpiod_h import *
@@ -937,12 +937,12 @@ class gpiod_line_iter:
 
         self.lines = []
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[gpiod_line]:
         # gpiod_line_iter_new(chip)
         for i in range(self.chip.num_lines):
             self.lines.append(gpiod_chip_get_line(self.chip, i))
             if self.lines[i] is None:
                 del self.lines
-                return None
+                return iter([])
 
-        return self.lines.__iter__()
+        return iter(self.lines)

@@ -786,7 +786,7 @@ class line_event:
 class line_bulk:
     # pylint: disable=function-redefined
     # pylint: disable=missing-function-docstring
-    def __init__(self, lines: List[line] = None):
+    def __init__(self, lines: Optional[List[line]] = None) -> None:
         """
         @brief Constructor. Creates a empty line_bulk or from a list of lines.
 
@@ -800,7 +800,7 @@ class line_bulk:
         """
         self._m_bulk = lines if lines is not None else []
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         @brief Destructor
 
@@ -808,7 +808,7 @@ class line_bulk:
             del bulk
         """
 
-    def append(self, new_line: line):
+    def append(self, new_line: line) -> None:
         """
         @brief Add a line to this line_bulk object.
 
@@ -906,7 +906,9 @@ class line_bulk:
         """
         self._m_bulk.clear()
 
-    def request(self, config: line_request, default_vals: List[int] = None):
+    def request(
+        self, config: line_request, default_vals: Optional[List[int]] = None
+    ) -> None:
         """
         @brief Request all lines held by this object.
 
@@ -940,7 +942,7 @@ class line_bulk:
             self.release()
             raise error
 
-    def release(self):
+    def release(self) -> None:
         """
         @brief Release all lines held by this object.
 
@@ -970,7 +972,7 @@ class line_bulk:
 
         return values
 
-    def set_values(self, values: List[int]):
+    def set_values(self, values: List[int]) -> None:
         """
         @brief Set values of all lines held by this object.
 
@@ -1055,7 +1057,7 @@ class line_bulk:
         if self.empty:
             raise RuntimeError("line_bulk not holding any GPIO lines")
 
-    def _to_line_bulk(self, bulk: libgpiod.gpiod_line_bulk):
+    def _to_line_bulk(self, bulk: libgpiod.gpiod_line_bulk) -> None:
         for it in self._m_bulk:
             # pylint: disable=protected-access
             bulk.add(it._m_line)
@@ -1099,15 +1101,13 @@ class line_iter:
             print("{}: {}".format(l.offset, l.name))
     """
 
-    def __init__(self, owner: chip):
+    def __init__(self, owner: chip) -> None:
         self._chip = owner
 
         self._iter = None
 
-    def __iter__(self):
-        self._iter = libgpiod.gpiod_line_iter(
-            self._chip._m_chip.get()
-        ).__iter__()
+    def __iter__(self) -> Iterator[libgpiod.gpiod_line]:
+        self._iter = iter(libgpiod.gpiod_line_iter(self._chip._m_chip.get()))
         if self._iter is None:
             errno = get_errno()
             raise OSError(
@@ -1117,4 +1117,7 @@ class line_iter:
         return self
 
     def __next__(self) -> line:
-        return line(self._iter.__next__(), self._chip)
+        if self._iter is not None:
+            return line(next(self._iter), self._chip)
+
+        raise StopIteration

@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from ctypes import sizeof
+from typing import Any
 
 _IOC_NRBITS = 8
 _IOC_TYPEBITS = 8
@@ -43,7 +44,7 @@ _IOC_WRITE = 1
 _IOC_READ = 2
 
 
-def _IOC(dir_, type_, nr, size) -> int:
+def _IOC(dir_: int, type_: int, nr: int, size: int) -> int:
     return (
         (dir_ << _IOC_DIRSHIFT)
         | (type_ << _IOC_TYPESHIFT)
@@ -52,16 +53,13 @@ def _IOC(dir_, type_, nr, size) -> int:
     )
 
 
-def _IOC_TYPECHECK(t) -> int:
-    """
-    @param t: ctypes data types
-    """
-    return sizeof(t)
+# @param t: ctypes data type
+_IOC_TYPECHECK = sizeof
 
 
-def _IOR(type_, nr, size) -> int:
-    return _IOC(_IOC_READ, type_, nr, _IOC_TYPECHECK(size))
+def _IOR(type_: int, nr: int, data_type: Any) -> int:
+    return _IOC(_IOC_READ, type_, nr, _IOC_TYPECHECK(data_type))
 
 
-def _IOWR(type_, nr, size) -> int:
-    return _IOC(_IOC_READ | _IOC_WRITE, type_, nr, _IOC_TYPECHECK(size))
+def _IOWR(type_: int, nr: int, data_type: Any) -> int:
+    return _IOC(_IOC_READ | _IOC_WRITE, type_, nr, _IOC_TYPECHECK(data_type))

@@ -42,7 +42,7 @@ from os.path import basename
 import select
 from select import POLLIN, POLLNVAL, POLLPRI
 from stat import S_ISCHR
-from typing import List
+from typing import List, Union
 
 from .gpio_h import *
 from .gpiod_h import *
@@ -764,7 +764,7 @@ def gpiod_chip_open_by_name(name: str) -> gpiod_chip:
     return gpiod_chip_open("/dev/" + str(name))
 
 
-def gpiod_chip_open_by_number(num: int) -> gpiod_chip:
+def gpiod_chip_open_by_number(num: Union[int, str]) -> gpiod_chip:
     """
     @brief Open a gpiochip by number.
 
@@ -802,7 +802,7 @@ def gpiod_chip_open_by_label(label: str) -> gpiod_chip:
     return None
 
 
-def gpiod_chip_open_lookup(descr) -> gpiod_chip:
+def gpiod_chip_open_lookup(descr: Union[int, str]) -> gpiod_chip:
     """
     @brief Open a gpiochip based on the best guess what the path is.
 
@@ -814,11 +814,11 @@ def gpiod_chip_open_lookup(descr) -> gpiod_chip:
     GPIO chip, its name, label or number as a string. Then it tries to open it
     using one of the gpiod_chip_open** variants.
     """
-    try:
-        num = int(descr)
-        return gpiod_chip_open_by_number(num)
-    except ValueError:
-        pass
+    if isinstance(descr, int):
+        descr = str(descr)
+
+    if descr.isdigit():
+        return gpiod_chip_open_by_number(descr)
 
     chip = gpiod_chip_open_by_label(descr)
 

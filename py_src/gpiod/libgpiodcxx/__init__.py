@@ -26,7 +26,7 @@ from ctypes import get_errno
 from datetime import timedelta
 from errno import ENOENT
 from os import strerror
-from typing import List, Optional, Union
+from typing import Iterator, List, Optional, Union
 
 from .. import libgpiod
 
@@ -78,17 +78,17 @@ def chip_deleter(chip_struct: libgpiod.gpiod_chip):
 
 class shared_chip:
     # pylint: disable=missing-function-docstring
-    def __init__(self, chip_struct: libgpiod.gpiod_chip = None):
+    def __init__(self, chip_struct: Optional[libgpiod.gpiod_chip] = None):
         self._chip_struct = chip_struct
 
-    def get(self):
+    def get(self) -> Optional[libgpiod.gpiod_chip]:
         return self._chip_struct
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self._chip_struct is not None:
             chip_deleter(self._chip_struct)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return self._chip_struct is not None
 
 
@@ -112,7 +112,7 @@ class chip:
             c = chip("gpiochip0")
             c = chip("/dev/gpiochip0", chip.OPEN_BY_PATH)
         """
-        if bool(chip_shared):
+        if chip_shared is not None and bool(chip_shared):
             self._m_chip = chip_shared
             return
 
@@ -178,9 +178,7 @@ class chip:
         Usage:
             print(chip.name)
         """
-        self._throw_if_noref()
-
-        return self._m_chip.get().name
+        return self._throw_if_noref_and_get_m_chip().name
 
     @property
     def label(self) -> str:
@@ -192,9 +190,7 @@ class chip:
         Usage:
             print(chip.label)
         """
-        self._throw_if_noref()
-
-        return self._m_chip.get().label
+        return self._throw_if_noref_and_get_m_chip().label
 
     @property
     def num_lines(self) -> int:
@@ -206,9 +202,7 @@ class chip:
         Usage:
             print(chip.num_lines)
         """
-        self._throw_if_noref()
-
-        return self._m_chip.get().num_lines
+        return self._throw_if_noref_and_get_m_chip().num_lines
 
     def get_line(self, offset: int) -> line:
         """
@@ -221,12 +215,12 @@ class chip:
         Usage:
             l = chip.get_line(0)
         """
-        self._throw_if_noref()
-
         if offset >= self.num_lines or offset < 0:
             raise IndexError("line offset out of range")
 
-        line_struct = libgpiod.gpiod_chip_get_line(self._m_chip.get(), offset)
+        line_struct = libgpiod.gpiod_chip_get_line(
+            self._throw_if_noref_and_get_m_chip(), offset
+        )
         if line_struct is None:
             errno = get_errno()
             raise OSError(
@@ -246,9 +240,9 @@ class chip:
         Usage:
             l = chip.find_line("PIN_0")
         """
-        self._throw_if_noref()
-
-        line_struct = libgpiod.gpiod_chip_find_line(self._m_chip.get(), name)
+        line_struct = libgpiod.gpiod_chip_find_line(
+            self._throw_if_noref_and_get_m_chip(), name
+        )
         errno = get_errno()
         if line_struct is None and errno != ENOENT:
             raise OSError(
@@ -358,9 +352,11 @@ class chip:
     OPEN_BY_LABEL = 4
     OPEN_BY_NUMBER = 5
 
-    def _throw_if_noref(self):
-        if not bool(self._m_chip.get()):
+    def _throw_if_noref_and_get_m_chip(self) -> libgpiod.gpiod_chip:
+        _m_chip_get = self._m_chip.get()
+        if _m_chip_get is None or not bool(_m_chip_get):
             raise RuntimeError("object not associated with an open GPIO chip")
+        return _m_chip_get
 
 
 class line_request:
@@ -1061,7 +1057,7 @@ class line_bulk:
         """
         return libgpiod.GPIOD_LINE_BULK_MAX_LINES
 
-    def __iter__(self) -> [].__iter__():
+    def __iter__(self) -> Iterator[line]:
         """
         @brief Iterator for iterating over lines held by line_bulk.
 

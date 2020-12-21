@@ -395,6 +395,14 @@ reqflag_mapping = {
     line_request.FLAG_OPEN_SOURCE: libgpiod.GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE,
 }
 
+def merge_and_map_flags(config_flags: int) -> int:
+    result = 0
+
+    for k, v in reqflag_mapping.items():
+        if config_flags & k:
+            result |= v
+
+    return result
 
 class line:
     # pylint: disable=function-redefined
@@ -548,7 +556,7 @@ class line:
         conf = libgpiod.gpiod_line_request_config()
         conf.consumer = config.consumer
         conf.request_type = reqtype_mapping[config.request_type]
-        conf.flags = 0
+        conf.flags = merge_and_map_flags(config.flags)
 
         rv = libgpiod.gpiod_line_request(_m_line, conf, default_val)
         if rv:

@@ -550,6 +550,10 @@ class line:
         conf.request_type = reqtype_mapping[config.request_type]
         conf.flags = 0
 
+        for k, v in reqflag_mapping.items():
+            if config.flags & k:
+                conf.flags |= v
+
         rv = libgpiod.gpiod_line_request(_m_line, conf, default_val)
         if rv:
             errno = get_errno()

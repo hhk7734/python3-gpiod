@@ -711,6 +711,21 @@ class line:
         """
         return self._m_chip
 
+    def update(self) -> None:
+        """
+        @brief Re-read the line info from the kernel.
+
+        Usage:
+            line.update()
+        """
+        ret = libgpiod.gpiod_line_update(self._throw_if_null_and_get_m_line())
+
+        if ret < 0:
+            errno = get_errno()
+            raise OSError(
+                errno, strerror(errno), "unable to update the line info"
+            )
+
     def reset(self):
         """
         @brief Reset the state of this object.

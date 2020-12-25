@@ -24,6 +24,12 @@ SOFTWARE.
 from os import close as os_close
 from typing import Optional
 
+
+def GPIOD_BIT(nr: int) -> int:
+    # pylint: disable=missing-function-docstring
+    return 1 << nr
+
+
 # pylint: disable=too-few-public-methods
 
 # Forward declaration
@@ -71,6 +77,11 @@ GPIOD_LINE_DIRECTION_OUTPUT = 2
 GPIOD_LINE_ACTIVE_STATE_HIGH = 1
 GPIOD_LINE_ACTIVE_STATE_LOW = 2
 
+GPIOD_LINE_BIAS_AS_IS = 1
+GPIOD_LINE_BIAS_DISABLE = 2
+GPIOD_LINE_BIAS_PULL_UP = 3
+GPIOD_LINE_BIAS_PULL_DOWN = 4
+
 GPIOD_LINE_REQUEST_DIRECTION_AS_IS = 1
 GPIOD_LINE_REQUEST_DIRECTION_INPUT = 2
 GPIOD_LINE_REQUEST_DIRECTION_OUTPUT = 3
@@ -78,9 +89,12 @@ GPIOD_LINE_REQUEST_EVENT_FALLING_EDGE = 4
 GPIOD_LINE_REQUEST_EVENT_RISING_EDGE = 5
 GPIOD_LINE_REQUEST_EVENT_BOTH_EDGES = 6
 
-GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN = 0b001
-GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE = 0b010
-GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW = 0b100
+GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN = GPIOD_BIT(0)
+GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE = GPIOD_BIT(1)
+GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW = GPIOD_BIT(2)
+GPIOD_LINE_REQUEST_FLAG_BIAS_DISABLE = GPIOD_BIT(3)
+GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN = GPIOD_BIT(4)
+GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP = GPIOD_BIT(5)
 
 
 class gpiod_line_request_config:
@@ -122,12 +136,13 @@ class gpiod_line:
         self.offset = 0
         self.direction = 0
         self.active_state = 0
-        self.used = False
-        self.open_source = False
-        self.open_drain = False
+        self.info_flags = 0
+
         self.state = 0
+
         self.chip = chip
         self.fd_handle: Optional[line_fd_handle] = None
+
         # size 32
         self.name = ""
         # size 32

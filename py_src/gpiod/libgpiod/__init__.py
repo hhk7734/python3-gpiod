@@ -44,8 +44,8 @@ from select import POLLIN, POLLNVAL, POLLPRI
 from stat import S_ISCHR
 from typing import Iterator, List, Optional, Union
 
-from .gpio_h import *
 from .gpiod_h import *
+from ..kernel import *
 
 # core.c
 
@@ -178,6 +178,62 @@ def gpiod_chip_get_line(chip: gpiod_chip, offset: int) -> gpiod_line:
     return chip.lines[offset]
 
 
+def gpiod_line_bias(line: gpiod_line) -> int:
+    """
+    @brief Read the GPIO line bias setting.
+
+    @param line GPIO line object.
+
+    @return Returns GPIOD_LINE_BIAS_PULL_UP, GPIOD_LINE_BIAS_PULL_DOWN,
+            GPIOD_LINE_BIAS_DISABLE or GPIOD_LINE_BIAS_AS_IS.
+    """
+    if line.info_flags & GPIOLINE_FLAG_BIAS_DISABLE:
+        return GPIOD_LINE_BIAS_DISABLE
+    if line.info_flags & GPIOLINE_FLAG_BIAS_PULL_UP:
+        return GPIOD_LINE_BIAS_PULL_UP
+    if line.info_flags & GPIOLINE_FLAG_BIAS_PULL_DOWN:
+        return GPIOD_LINE_BIAS_PULL_DOWN
+
+    return GPIOD_LINE_BIAS_AS_IS
+
+
+def gpiod_line_is_used(line: gpiod_line) -> bool:
+    """
+    @brief Check if the line is currently in use.
+
+    @param line GPIO line object.
+
+    @return True if the line is in use, false otherwise.
+
+    The user space can't know exactly why a line is busy. It may have been
+    requested by another process or hogged by the kernel. It only matters that
+    the line is used and we can't request it.
+    """
+    return bool(line.info_flags & GPIOLINE_FLAG_KERNEL)
+
+
+def gpiod_line_is_open_drain(line: gpiod_line) -> bool:
+    """
+    @brief Check if the line is an open-drain GPIO.
+
+    @param line GPIO line object.
+
+    @return True if the line is an open-drain GPIO, false otherwise.
+    """
+    return bool(line.info_flags & GPIOLINE_FLAG_OPEN_DRAIN)
+
+
+def gpiod_line_is_open_source(line: gpiod_line) -> bool:
+    """
+    @brief Check if the line is an open-source GPIO.
+
+    @param line GPIO line object.
+
+    @return True if the line is an open-source GPIO, false otherwise.
+    """
+    return bool(line.info_flags & GPIOLINE_FLAG_OPEN_SOURCE)
+
+
 def gpiod_line_update(line: gpiod_line) -> int:
     """
     @brief Re-read the line info.
@@ -219,9 +275,7 @@ def gpiod_line_update(line: gpiod_line) -> int:
         if info.flags & GPIOLINE_FLAG_ACTIVE_LOW
         else GPIOD_LINE_ACTIVE_STATE_HIGH
     )
-    line.used = bool(info.flags & GPIOLINE_FLAG_KERNEL)
-    line.open_drain = bool(info.flags & GPIOLINE_FLAG_OPEN_DRAIN)
-    line.open_source = bool(info.flags & GPIOLINE_FLAG_OPEN_SOURCE)
+    line.info_flags = info.flags
 
     line.name = info.name.decode()
     line.consumer = info.consumer.decode()
@@ -270,6 +324,12 @@ def _line_request_flag_to_gpio_handleflag(flags: int) -> int:
         hflags |= GPIOHANDLE_REQUEST_OPEN_SOURCE
     if flags & GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW:
         hflags |= GPIOHANDLE_REQUEST_ACTIVE_LOW
+    if flags & GPIOD_LINE_REQUEST_FLAG_BIAS_DISABLE:
+        hflags |= GPIOHANDLE_REQUEST_BIAS_DISABLE
+    if flags & GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN:
+        hflags |= GPIOHANDLE_REQUEST_BIAS_PULL_DOWN
+    if flags & GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP:
+        hflags |= GPIOHANDLE_REQUEST_BIAS_PULL_UP
 
     return hflags
 

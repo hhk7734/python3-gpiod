@@ -82,7 +82,7 @@ def _is_gpiochip_cdev(path: str) -> bool:
         return False
 
     # Make sure the major and minor numbers of the character device
-    # correspond with the ones in the dev attribute in sysfs.
+    # correspond to the ones in the dev attribute in sysfs.
     devstr = "{}:{}".format(major(statbuf.st_rdev), minor(statbuf.st_rdev))
 
     try:

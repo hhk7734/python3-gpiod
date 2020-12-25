@@ -951,7 +951,7 @@ class line_bulk:
         if self.size != len(default_vals):
             raise ValueError(
                 "the number of default values must correspond "
-                "with the number of lines"
+                "to the number of lines"
             )
 
         try:
@@ -978,7 +978,7 @@ class line_bulk:
         @brief Read values from all lines held by this object.
 
         @return List containing line values the order of which corresponds
-                with the order of lines in the internal array.
+                to the order of lines in the internal array.
 
         Usage:
             ret = bulk.get_values()
@@ -1005,7 +1005,7 @@ class line_bulk:
 
         if self.size != len(values):
             raise ValueError(
-                "the size of values array must correspond with "
+                "the size of values array must correspond to "
                 "the number of lines"
             )
 

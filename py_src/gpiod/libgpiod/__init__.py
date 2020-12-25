@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-from ctypes import memmove, pointer, set_errno, sizeof
+from ctypes import memmove, memset, pointer, set_errno, sizeof
 from datetime import datetime, timedelta
 from errno import EBUSY, EINVAL, EIO, ENODEV, ENOENT, ENOTTY, EPERM
 from fcntl import ioctl
@@ -42,7 +42,7 @@ from os.path import basename
 import select
 from select import POLLIN, POLLNVAL, POLLPRI
 from stat import S_ISCHR
-from typing import Iterator, List, Union
+from typing import Iterator, List, Optional, Union
 
 from .gpio_h import *
 from .gpiod_h import *
@@ -573,7 +573,9 @@ def gpiod_line_set_value(line: gpiod_line, value: int) -> int:
     return gpiod_line_set_value_bulk(bulk, [value])
 
 
-def gpiod_line_set_value_bulk(bulk: gpiod_line_bulk, values: List[int]) -> int:
+def gpiod_line_set_value_bulk(
+    bulk: gpiod_line_bulk, values: Optional[List[int]] = None
+) -> int:
     """
     @brief Set the values of a set of GPIO lines.
 
@@ -591,8 +593,11 @@ def gpiod_line_set_value_bulk(bulk: gpiod_line_bulk, values: List[int]) -> int:
     if not _line_bulk_same_chip(bulk) or not _line_bulk_all_requested(bulk):
         return -1
 
-    for i in range(bulk.num_lines):
-        data.values[i] = 1 if values[i] else 0
+    memset(pointer(data), 0, sizeof(data))
+
+    if values is not None:
+        for i in range(bulk.num_lines):
+            data.values[i] = 1 if values[i] else 0
 
     fd = bulk[0].fd_handle.fd
 

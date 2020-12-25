@@ -491,7 +491,6 @@ class line:
             else self.ACTIVE_LOW
         )
 
-    @property
     def is_used(self) -> bool:
         """
         @brief Check if this line is used by the kernel or other user space
@@ -500,11 +499,10 @@ class line:
         @return True if this line is in use, false otherwise.
 
         Usage:
-            print(line.is_used)
+            print(line.is_used())
         """
         return libgpiod.gpiod_line_is_used(self._throw_if_null_and_get_m_line())
 
-    @property
     def is_open_drain(self) -> bool:
         """
         @brief Check if this line represents an open-drain GPIO.
@@ -512,13 +510,12 @@ class line:
         @return True if the line is an open-drain GPIO, false otherwise.
 
         Usage:
-            print(line.is_open_drain)
+            print(line.is_open_drain())
         """
         return libgpiod.gpiod_line_is_open_drain(
             self._throw_if_null_and_get_m_line()
         )
 
-    @property
     def is_open_source(self) -> bool:
         """
         @brief Check if this line represents an open-source GPIO.
@@ -526,7 +523,7 @@ class line:
         @return True if the line is an open-source GPIO, false otherwise.
 
         Usage:
-            print(line.is_open_source)
+            print(line.is_open_source())
         """
         return libgpiod.gpiod_line_is_open_source(
             self._throw_if_null_and_get_m_line()
@@ -572,7 +569,6 @@ class line:
         """
         libgpiod.gpiod_line_release(self._throw_if_null_and_get_m_line())
 
-    @property
     def is_requested(self) -> bool:
         """
         @brief Check if this user has ownership of this line.
@@ -580,7 +576,7 @@ class line:
         @return True if the user has ownership of this line, false otherwise.
 
         Usage:
-            print(line.is_requested)
+            print(line.is_requested())
         """
         return libgpiod.gpiod_line_is_requested(
             self._throw_if_null_and_get_m_line()

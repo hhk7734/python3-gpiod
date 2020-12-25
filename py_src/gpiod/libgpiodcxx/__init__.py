@@ -502,7 +502,7 @@ class line:
         Usage:
             print(line.is_used)
         """
-        return self._throw_if_null_and_get_m_line().used
+        return libgpiod.gpiod_line_is_used(self._throw_if_null_and_get_m_line())
 
     @property
     def is_open_drain(self) -> bool:
@@ -514,7 +514,9 @@ class line:
         Usage:
             print(line.is_open_drain)
         """
-        return self._throw_if_null_and_get_m_line().open_drain
+        return libgpiod.gpiod_line_is_open_drain(
+            self._throw_if_null_and_get_m_line()
+        )
 
     @property
     def is_open_source(self) -> bool:
@@ -526,7 +528,9 @@ class line:
         Usage:
             print(line.is_open_source)
         """
-        return self._throw_if_null_and_get_m_line().open_source
+        return libgpiod.gpiod_line_is_open_source(
+            self._throw_if_null_and_get_m_line()
+        )
 
     def request(self, config: line_request, default_val: int = 0):
         """

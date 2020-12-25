@@ -259,6 +259,19 @@ def _line_bulk_all_free(bulk: gpiod_line_bulk) -> bool:
     return True
 
 
+def _line_request_flag_to_gpio_handleflag(flags: int) -> int:
+    hflags = 0
+
+    if flags & GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN:
+        hflags |= GPIOHANDLE_REQUEST_OPEN_DRAIN
+    if flags & GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE:
+        hflags |= GPIOHANDLE_REQUEST_OPEN_SOURCE
+    if flags & GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW:
+        hflags |= GPIOHANDLE_REQUEST_ACTIVE_LOW
+
+    return hflags
+
+
 def _line_request_values(
     bulk: gpiod_line_bulk,
     config: gpiod_line_request_config,
@@ -283,19 +296,13 @@ def _line_request_values(
     # pylint: disable=no-member
     req = gpiohandle_request()
 
-    if config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN:
-        req.flags |= GPIOHANDLE_REQUEST_OPEN_DRAIN
-    if config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE:
-        req.flags |= GPIOHANDLE_REQUEST_OPEN_SOURCE
-    if config.flags & GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW:
-        req.flags |= GPIOHANDLE_REQUEST_ACTIVE_LOW
+    req.lines = bulk.num_lines
+    req.flags = _line_request_flag_to_gpio_handleflag(config.flags)
 
     if config.request_type == GPIOD_LINE_REQUEST_DIRECTION_INPUT:
         req.flags |= GPIOHANDLE_REQUEST_INPUT
     elif config.request_type == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT:
         req.flags |= GPIOHANDLE_REQUEST_OUTPUT
-
-    req.lines = bulk.num_lines
 
     for i in range(bulk.num_lines):
         req.lineoffsets[i] = bulk[i].offset
@@ -334,14 +341,8 @@ def _line_request_event_single(
         req.consumer_label = config.consumer[:32].encode()
 
     req.lineoffset = line.offset
+    req.handleflags = _line_request_flag_to_gpio_handleflag(config.flags)
     req.handleflags |= GPIOHANDLE_REQUEST_INPUT
-
-    if config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN:
-        req.flags |= GPIOHANDLE_REQUEST_OPEN_DRAIN
-    if config.flags & GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE:
-        req.flags |= GPIOHANDLE_REQUEST_OPEN_SOURCE
-    if config.flags & GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW:
-        req.flags |= GPIOHANDLE_REQUEST_ACTIVE_LOW
 
     if config.request_type == GPIOD_LINE_REQUEST_EVENT_RISING_EDGE:
         req.eventflags |= GPIOEVENT_REQUEST_RISING_EDGE

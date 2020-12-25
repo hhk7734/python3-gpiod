@@ -178,10 +178,10 @@ def gpiod_chip_get_line(chip: gpiod_chip, offset: int) -> gpiod_line:
     return chip.lines[offset]
 
 
-def _line_maybe_update(line: gpiod_line):
+def _line_maybe_update(line: gpiod_line) -> None:
     status = gpiod_line_update(line)
     if status < 0:
-        line.up_to_date = False
+        line.needs_update = False
 
 
 def gpiod_line_update(line: gpiod_line) -> int:
@@ -222,7 +222,7 @@ def gpiod_line_update(line: gpiod_line) -> int:
     line.name = info.name.decode()
     line.consumer = info.consumer.decode()
 
-    line.up_to_date = True
+    line.needs_update = True
 
     return 0
 

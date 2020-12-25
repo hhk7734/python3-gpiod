@@ -125,7 +125,7 @@ class gpiod_line:
         self.open_source = False
         self.open_drain = False
         self.state = 0
-        self.up_to_date = False
+        self.needs_update = False
         self.chip = chip
         self.fd_handle = None
         # size 32

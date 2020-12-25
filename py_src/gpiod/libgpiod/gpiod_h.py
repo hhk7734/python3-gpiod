@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from os import close as os_close
+from typing import Optional
 
 # pylint: disable=too-few-public-methods
 
@@ -125,9 +126,8 @@ class gpiod_line:
         self.open_source = False
         self.open_drain = False
         self.state = 0
-        self.needs_update = False
         self.chip = chip
-        self.fd_handle = None
+        self.fd_handle: Optional[line_fd_handle] = None
         # size 32
         self.name = ""
         # size 32

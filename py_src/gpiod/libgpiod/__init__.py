@@ -178,24 +178,28 @@ def gpiod_chip_get_line(chip: gpiod_chip, offset: int) -> gpiod_line:
     return chip.lines[offset]
 
 
-def _line_maybe_update(line: gpiod_line) -> None:
-    status = gpiod_line_update(line)
-    if status < 0:
-        line.needs_update = False
-
-
 def gpiod_line_update(line: gpiod_line) -> int:
     """
     @brief Re-read the line info.
 
     @param line: GPIO line object.
 
-    @return 0 is the operation succeeds. In case of an error this routine
+    @return 0 if the operation succeeds. In case of an error this routine
             returns -1 and sets the last error number.
 
     The line info is initially retrieved from the kernel by
-    gpiod_chip_get_line(). Users can use this line to manually re-read the line
-    info.
+    gpiod_chip_get_line() and is later re-read after every successful request.
+    Users can use this function to manually re-read the line info when needed.
+
+    We currently have no mechanism provided by the kernel for keeping the line
+    info synchronized and for the sake of speed and simplicity of this low-level
+    library we don't want to re-read the line info automatically everytime
+    a property is retrieved. Any daemon using this library must track the state
+    of lines on its own and call this routine if needed.
+
+    The state of requested lines is kept synchronized (or rather cannot be
+    changed by external agents while the ownership of the line is taken) so
+    there's no need to call this function in that case.
     """
     info = gpioline_info()
 
@@ -221,8 +225,6 @@ def gpiod_line_update(line: gpiod_line) -> int:
 
     line.name = info.name.decode()
     line.consumer = info.consumer.decode()
-
-    line.needs_update = True
 
     return 0
 
@@ -321,13 +323,18 @@ def _line_request_values(
     if status < 0:
         return -1
 
+    # line_fd = line_make_fd_handle(req.fd)
     line_fd = line_fd_handle(req.fd)
 
     for it in bulk:
         it.state = _LINE_REQUESTED_VALUES
-        # line_set_fd(line, line_fd) -> line_fd_incref(line)
+        # line_set_fd(line, line_fd)
         it.fd_handle = line_fd
-        _line_maybe_update(it)
+
+        rv = gpiod_line_update(it)
+        if rv:
+            gpiod_line_release_bulk(bulk)
+            return rv
 
     return 0
 
@@ -358,8 +365,13 @@ def _line_request_event_single(
     line_fd = line_fd_handle(req.fd)
 
     line.state = _LINE_REQUESTED_EVENTS
+    # line_set_fd(line, line_fd)
     line.fd_handle = line_fd
-    _line_maybe_update(line)
+
+    rv = gpiod_line_update(line)
+    if rv:
+        gpiod_line_release(line)
+        return rv
 
     return 0
 

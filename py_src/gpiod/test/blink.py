@@ -38,10 +38,10 @@ print(
     "line active state: ",
     "active low" if led.active_state == line.ACTIVE_LOW else "active high",
 )
-print("is line used: ", led.is_used)
-print("is line open drain: ", led.is_open_drain)
-print("is_open_source: ", led.is_open_source)
-print("is line requested: ", led.is_requested)
+print("is line used: ", led.is_used())
+print("is line open drain: ", led.is_open_drain())
+print("is_open_source: ", led.is_open_source())
+print("is line requested: ", led.is_requested())
 
 print("\nrequest line\n")
 
@@ -60,10 +60,10 @@ print(
     "line active state: ",
     "active low" if led.active_state == line.ACTIVE_LOW else "active high",
 )
-print("is line used: ", led.is_used)
-print("is line open drain: ", led.is_open_drain)
-print("is_open_source: ", led.is_open_source)
-print("is line requested: ", led.is_requested)
+print("is line used: ", led.is_used())
+print("is line open drain: ", led.is_open_drain())
+print("is_open_source: ", led.is_open_source())
+print("is line requested: ", led.is_requested())
 
 while True:
     led.set_value(0)

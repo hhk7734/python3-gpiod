@@ -26,6 +26,12 @@ from ctypes import get_errno
 from datetime import timedelta
 from errno import ENOENT
 from os import strerror
+from py_src.gpiod.libgpiod.gpiod_h import (
+    GPIOD_LINE_BIAS_AS_IS,
+    GPIOD_LINE_BIAS_DISABLE,
+    GPIOD_LINE_BIAS_PULL_DOWN,
+    GPIOD_LINE_BIAS_PULL_UP,
+)
 from typing import Iterator, List, Optional, Union
 
 from .. import libgpiod
@@ -44,7 +50,10 @@ class chip:
 
 class line:
     # pylint: disable=too-few-public-methods
-    pass
+    BIAS_AS_IS = 1
+    BIAS_DISABLE = 2
+    BIAS_PULL_UP = 3
+    BIAS_PULL_DOWN = 4
 
 
 class line_bulk:
@@ -369,9 +378,12 @@ class line_request:
     EVENT_RISING_EDGE = 5
     EVENT_BOTH_EDGES = 6
 
-    FLAG_ACTIVE_LOW = 0b001
-    FLAG_OPEN_SOURCE = 0b010
-    FLAG_OPEN_DRAIN = 0b100
+    FLAG_ACTIVE_LOW = libgpiod.GPIOD_BIT(0)
+    FLAG_OPEN_SOURCE = libgpiod.GPIOD_BIT(1)
+    FLAG_OPEN_DRAIN = libgpiod.GPIOD_BIT(2)
+    FLAG_BIAS_DISABLE = libgpiod.GPIOD_BIT(3)
+    FLAG_BIAS_PULL_DOWN = libgpiod.GPIOD_BIT(4)
+    FLAG_BIAS_PULL_UP = libgpiod.GPIOD_BIT(5)
 
     def __init__(self):
         self.consumer = ""
@@ -390,9 +402,20 @@ reqtype_mapping = {
 }
 
 reqflag_mapping = {
+    # pylint: disable=line-too-long
     line_request.FLAG_ACTIVE_LOW: libgpiod.GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW,
     line_request.FLAG_OPEN_DRAIN: libgpiod.GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN,
     line_request.FLAG_OPEN_SOURCE: libgpiod.GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE,
+    line_request.FLAG_BIAS_DISABLE: libgpiod.GPIOD_LINE_REQUEST_FLAG_BIAS_DISABLE,
+    line_request.FLAG_BIAS_PULL_DOWN: libgpiod.GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN,
+    line_request.FLAG_BIAS_PULL_UP: libgpiod.GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP,
+}
+
+bias_mapping = {
+    GPIOD_LINE_BIAS_PULL_UP: line.BIAS_PULL_UP,
+    GPIOD_LINE_BIAS_PULL_DOWN: line.BIAS_PULL_DOWN,
+    GPIOD_LINE_BIAS_DISABLE: line.BIAS_DISABLE,
+    GPIOD_LINE_BIAS_AS_IS: line.BIAS_AS_IS,
 }
 
 
@@ -490,6 +513,20 @@ class line:
             == libgpiod.GPIOD_LINE_ACTIVE_STATE_HIGH
             else self.ACTIVE_LOW
         )
+
+    @property
+    def bias(self) -> int:
+        """
+        @brief Get current bias of this line.
+
+        @return Current bias setting.
+
+        Usage:
+            print(line.bias == line.BIAS_PULL_UP)
+        """
+        return bias_mapping[
+            libgpiod.gpiod_line_bias(self._throw_if_null_and_get_m_line())
+        ]
 
     def is_used(self) -> bool:
         """
@@ -783,6 +820,11 @@ class line:
 
     ACTIVE_LOW = 1
     ACTIVE_HIGH = 2
+
+    BIAS_AS_IS = 1
+    BIAS_DISABLE = 2
+    BIAS_PULL_UP = 3
+    BIAS_PULL_DOWN = 4
 
     def _throw_if_null_and_get_m_line(self) -> libgpiod.gpiod_line:
         if self._m_line is None:

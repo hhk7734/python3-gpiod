@@ -21,6 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from __future__ import annotations
+
 from copy import copy
 from ctypes import get_errno
 from datetime import timedelta
@@ -32,45 +34,24 @@ from .. import libgpiod
 
 # pylint: disable=too-many-lines
 
+_CHIP_OPEN_LOOKUP = 1
+_CHIP_OPEN_BY_PATH = 2
+_CHIP_OPEN_BY_NAME = 3
+_CHIP_OPEN_BY_LABEL = 4
+_CHIP_OPEN_BY_NUMBER = 5
 
-class chip:
-    # pylint: disable=too-few-public-methods
-    OPEN_LOOKUP = 1
-    OPEN_BY_PATH = 2
-    OPEN_BY_NAME = 3
-    OPEN_BY_LABEL = 4
-    OPEN_BY_NUMBER = 5
-
-
-class line:
-    # pylint: disable=too-few-public-methods
-    BIAS_AS_IS = 1
-    BIAS_DISABLE = 2
-    BIAS_PULL_UP = 3
-    BIAS_PULL_DOWN = 4
-
-
-class line_bulk:
-    # pylint: disable=too-few-public-methods
-    pass
-
-
-class line_event:
-    # pylint: disable=too-few-public-methods
-    pass
-
-
-class line_request:
-    # pylint: disable=too-few-public-methods
-    pass
+_LINE_BIAS_AS_IS = 1
+_LINE_BIAS_DISABLE = 2
+_LINE_BIAS_PULL_UP = 3
+_LINE_BIAS_PULL_DOWN = 4
 
 
 open_funcs = {
-    chip.OPEN_LOOKUP: libgpiod.gpiod_chip_open_lookup,
-    chip.OPEN_BY_PATH: libgpiod.gpiod_chip_open,
-    chip.OPEN_BY_NAME: libgpiod.gpiod_chip_open_by_name,
-    chip.OPEN_BY_LABEL: libgpiod.gpiod_chip_open_by_label,
-    chip.OPEN_BY_NUMBER: libgpiod.gpiod_chip_open_by_number,
+    _CHIP_OPEN_LOOKUP: libgpiod.gpiod_chip_open_lookup,
+    _CHIP_OPEN_BY_PATH: libgpiod.gpiod_chip_open,
+    _CHIP_OPEN_BY_NAME: libgpiod.gpiod_chip_open_by_name,
+    _CHIP_OPEN_BY_LABEL: libgpiod.gpiod_chip_open_by_label,
+    _CHIP_OPEN_BY_NUMBER: libgpiod.gpiod_chip_open_by_number,
 }
 
 
@@ -100,7 +81,7 @@ class chip:
     def __init__(
         self,
         device: Optional[Union[int, str]] = None,
-        how: int = chip.OPEN_LOOKUP,
+        how: int = _CHIP_OPEN_LOOKUP,
         chip_shared: Optional[shared_chip] = None,
     ) -> None:
         """
@@ -132,7 +113,7 @@ class chip:
         """
 
     def open(
-        self, device: Union[int, str], how: int = chip.OPEN_LOOKUP
+        self, device: Union[int, str], how: int = _CHIP_OPEN_LOOKUP
     ) -> None:
         """
         @brief Open a GPIO chip.
@@ -349,11 +330,11 @@ class chip:
         """
         return self._m_chip.get() is not None
 
-    OPEN_LOOKUP = 1
-    OPEN_BY_PATH = 2
-    OPEN_BY_NAME = 3
-    OPEN_BY_LABEL = 4
-    OPEN_BY_NUMBER = 5
+    OPEN_LOOKUP = _CHIP_OPEN_LOOKUP
+    OPEN_BY_PATH = _CHIP_OPEN_BY_PATH
+    OPEN_BY_NAME = _CHIP_OPEN_BY_NAME
+    OPEN_BY_LABEL = _CHIP_OPEN_BY_LABEL
+    OPEN_BY_NUMBER = _CHIP_OPEN_BY_NUMBER
 
     def _throw_if_noref_and_get_m_chip(self) -> libgpiod.gpiod_chip:
         _m_chip_get = self._m_chip.get()
@@ -406,10 +387,10 @@ reqflag_mapping = {
 }
 
 bias_mapping = {
-    libgpiod.GPIOD_LINE_BIAS_PULL_UP: line.BIAS_PULL_UP,
-    libgpiod.GPIOD_LINE_BIAS_PULL_DOWN: line.BIAS_PULL_DOWN,
-    libgpiod.GPIOD_LINE_BIAS_DISABLE: line.BIAS_DISABLE,
-    libgpiod.GPIOD_LINE_BIAS_AS_IS: line.BIAS_AS_IS,
+    libgpiod.GPIOD_LINE_BIAS_PULL_UP: _LINE_BIAS_PULL_UP,
+    libgpiod.GPIOD_LINE_BIAS_PULL_DOWN: _LINE_BIAS_PULL_DOWN,
+    libgpiod.GPIOD_LINE_BIAS_DISABLE: _LINE_BIAS_DISABLE,
+    libgpiod.GPIOD_LINE_BIAS_AS_IS: _LINE_BIAS_AS_IS,
 }
 
 

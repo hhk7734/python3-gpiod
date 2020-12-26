@@ -21,8 +21,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from __future__ import annotations
+
 from os import close as os_close
-from typing import Optional
+from typing import List, Optional
 
 
 def GPIOD_BIT(nr: int) -> int:
@@ -31,15 +33,6 @@ def GPIOD_BIT(nr: int) -> int:
 
 
 # pylint: disable=too-few-public-methods
-
-# Forward declaration
-class gpiod_chip:
-    pass
-
-
-# Forward declaration
-class gpiod_line:
-    pass
 
 
 GPIOD_LINE_BULK_MAX_LINES = 64
@@ -63,7 +56,7 @@ class gpiod_line_bulk:
         # gpiod_line_bulk_num_lines(bulk)
         return len(self._lines)
 
-    def __getitem__(self, offset):
+    def __getitem__(self, offset: int) -> gpiod_line:
         # gpiod_line_bulk_get_line(bulk, offset)
         return self._lines[offset]
 
@@ -155,7 +148,7 @@ class gpiod_line:
 class gpiod_chip:
     # pylint: disable=function-redefined
     def __init__(self, num_lines: int, fd: int, name: str, label: str):
-        self.lines = [None] * num_lines
+        self.lines: List[gpiod_line] = [None] * num_lines
         self._num_lines = num_lines
         self._fd = fd
         # size 32

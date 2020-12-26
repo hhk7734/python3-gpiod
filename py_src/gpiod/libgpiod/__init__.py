@@ -315,6 +315,27 @@ def _line_bulk_all_free(bulk: gpiod_line_bulk) -> bool:
     return True
 
 
+def _line_request_direction_is_valid(direction: int) -> bool:
+    if (
+        direction == GPIOD_LINE_REQUEST_DIRECTION_AS_IS
+        or direction == GPIOD_LINE_REQUEST_DIRECTION_INPUT
+        or direction == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT
+    ):
+        return True
+
+    set_errno(EINVAL)
+    return False
+
+
+def _line_request_direction_to_gpio_handleflag(direction: int) -> int:
+    if direction == GPIOD_LINE_REQUEST_DIRECTION_INPUT:
+        return GPIOHANDLE_REQUEST_INPUT
+    if direction == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT:
+        return GPIOHANDLE_REQUEST_OUTPUT
+
+    return 0
+
+
 def _line_request_flag_to_gpio_handleflag(flags: int) -> int:
     hflags = 0
 
@@ -386,12 +407,15 @@ def _line_request_values(
     # line_fd = line_make_fd_handle(req.fd)
     line_fd = line_fd_handle(req.fd)
 
-    for it in bulk:
-        it.state = _LINE_REQUESTED_VALUES
+    for i, line in enumerate(bulk):
+        line.state = _LINE_REQUESTED_VALUES
+        line.req_flags = config.flags
+        if config.request_type == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT:
+            line.output_value = req.default_values[i]
         # line_set_fd(line, line_fd)
-        it.fd_handle = line_fd
+        line.fd_handle = line_fd
 
-        rv = gpiod_line_update(it)
+        rv = gpiod_line_update(line)
         if rv:
             gpiod_line_release_bulk(bulk)
             return rv
@@ -425,6 +449,7 @@ def _line_request_event_single(
     line_fd = line_fd_handle(req.fd)
 
     line.state = _LINE_REQUESTED_EVENTS
+    line.req_flags = config.flags
     # line_set_fd(line, line_fd)
     line.fd_handle = line_fd
 
@@ -677,7 +702,212 @@ def gpiod_line_set_value_bulk(
     if status < 0:
         return -1
 
+    for i, line in enumerate(bulk):
+        line.output_value = data.values[i]
+
     return 0
+
+
+def gpiod_line_set_config(
+    line: gpiod_line, direction: int, flags: int, value: int
+) -> int:
+    """
+    @brief Update the configuration of a single GPIO line.
+
+    @param line:      GPIO line object.
+    @param direction: Updated direction which may be one of
+                      GPIOD_LINE_REQUEST_DIRECTION_AS_IS,
+                      GPIOD_LINE_REQUEST_DIRECTION_INPUT, or
+                      GPIOD_LINE_REQUEST_DIRECTION_OUTPUT.
+    @param flags:     Replacement flags.
+    @param value:     The new output value for the line when direction is
+                      GPIOD_LINE_REQUEST_DIRECTION_OUTPUT.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+    """
+    bulk = gpiod_line_bulk()
+
+    bulk.add(line)
+
+    return gpiod_line_set_config_bulk(bulk, direction, flags, [value])
+
+
+def gpiod_line_set_config_bulk(
+    bulk: gpiod_line_bulk,
+    direction: int,
+    flags: int,
+    values: Optional[List[int]],
+) -> int:
+    """
+    @brief Update the configuration of a set of GPIO lines.
+
+    @param bulk:      Set of GPIO lines.
+    @param direction: Updated direction which may be one of
+                      GPIOD_LINE_REQUEST_DIRECTION_AS_IS,
+                      GPIOD_LINE_REQUEST_DIRECTION_INPUT, or
+                      GPIOD_LINE_REQUEST_DIRECTION_OUTPUT.
+    @param flags:     Replacement flags.
+    @param values:    An array holding line_bulk->num_lines new logical values
+                      for lines when direction is
+                      GPIOD_LINE_REQUEST_DIRECTION_OUTPUT.
+                      A NULL pointer is interpreted as a logical low for all
+                      lines.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+
+    If the lines were not previously requested together, the behavior is
+    undefined.
+    """
+    hcfg = gpiohandle_config()
+
+    if not _line_bulk_same_chip(bulk) or not _line_bulk_all_requested(bulk):
+        return -1
+
+    if not _line_request_direction_is_valid(direction):
+        return -1
+
+    memset(pointer(hcfg), 0, sizeof(hcfg))
+
+    hcfg.flags = _line_request_flag_to_gpio_handleflag(flags)
+    hcfg.flags |= _line_request_direction_to_gpio_handleflag(direction)
+    if direction == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT and values is not None:
+        for i in range(bulk.num_lines):
+            hcfg.default_values[i] = 1 if values[i] else 0
+
+    fd = bulk[0].fd_handle.fd
+
+    status = ioctl(fd, GPIOHANDLE_SET_CONFIG_IOCTL, hcfg)
+    if status < 0:
+        return -1
+
+    for i, line in enumerate(bulk):
+        line.req_flags = flags
+        if direction == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT:
+            line.output_value = hcfg.default_values[i]
+
+        rv = gpiod_line_update(line)
+        if rv < 0:
+            return rv
+
+    return 0
+
+
+def gpiod_line_set_flags(line: gpiod_line, flags: int) -> int:
+    """
+    @brief Update the configuration flags of a single GPIO line.
+
+    @param line:  GPIO line object.
+    @param flags: Replacement flags.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+    """
+    bulk = gpiod_line_bulk()
+
+    bulk.add(line)
+
+    return gpiod_line_set_flags_bulk(bulk, flags)
+
+
+def gpiod_line_set_flags_bulk(bulk: gpiod_line_bulk, flags: int) -> int:
+    """
+    @brief Update the configuration flags of a set of GPIO lines.
+
+    @param bulk:  Set of GPIO lines.
+    @param flags: Replacement flags.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+
+    If the lines were not previously requested together, the behavior is
+    undefined.
+    """
+    line = bulk[0]
+    values = []
+    direction: int
+
+    if line.direction == GPIOD_LINE_DIRECTION_OUTPUT:
+        for line in bulk:
+            values.append(line.output_value)
+
+        direction = GPIOD_LINE_REQUEST_DIRECTION_OUTPUT
+    else:
+        direction = GPIOD_LINE_REQUEST_DIRECTION_INPUT
+
+    return gpiod_line_set_config_bulk(bulk, direction, flags, values)
+
+
+def gpiod_line_set_direction_input(line: gpiod_line) -> int:
+    """
+    @brief Set the direction of a single GPIO line to input.
+
+    @param line: GPIO line object.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+    """
+    return gpiod_line_set_config(
+        line, GPIOD_LINE_REQUEST_DIRECTION_INPUT, line.req_flags, 0
+    )
+
+
+def gpiod_line_set_direction_input_bulk(bulk: gpiod_line_bulk) -> int:
+    """
+    @brief Set the direction of a set of GPIO lines to input.
+
+    @param bulk: Set of GPIO lines.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+
+    If the lines were not previously requested together, the behavior is
+    undefined.
+    """
+    line = bulk[0]
+
+    return gpiod_line_set_config_bulk(
+        bulk, GPIOD_LINE_REQUEST_DIRECTION_INPUT, line.req_flags, None
+    )
+
+
+def gpiod_line_set_direction_output(line: gpiod_line, value: int) -> int:
+    """
+    @brief Set the direction of a single GPIO line to output.
+
+    @param line:  GPIO line object.
+    @param value: The logical value output on the line.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+    """
+    return gpiod_line_set_config(
+        line, GPIOD_LINE_REQUEST_DIRECTION_OUTPUT, line.req_flags, value
+    )
+
+
+def gpiod_line_set_direction_output_bulk(
+    bulk: gpiod_line_bulk, values: Optional[List[int]]
+) -> int:
+    """
+    @brief Set the direction of a set of GPIO lines to output.
+
+    @param bulk:   Set of GPIO lines.
+    @param values: An array holding line_bulk->num_lines new logical values
+                for lines.  A NULL pointer is interpreted as a logical low
+                for all lines.
+
+    @return 0 is the operation succeeds. In case of an error this routine
+            returns -1 and sets the last error number.
+
+    If the lines were not previously requested together, the behavior is
+    undefined.
+    """
+    line = bulk[0]
+    return gpiod_line_set_config_bulk(
+        bulk, GPIOD_LINE_REQUEST_DIRECTION_OUTPUT, line.req_flags, values
+    )
 
 
 def gpiod_line_event_wait(line: gpiod_line, timeout: timedelta) -> int:

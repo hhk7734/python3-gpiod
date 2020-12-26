@@ -136,7 +136,10 @@ class gpiod_line:
         self.offset = 0
         self.direction = 0
         self.active_state = 0
+        self.output_value = 0
+
         self.info_flags = 0
+        self.req_flags = 0
 
         self.state = 0
 

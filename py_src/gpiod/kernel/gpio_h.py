@@ -80,6 +80,17 @@ class gpiohandle_request(Structure):
     ]
 
 
+class gpiohandle_config(Structure):
+    _fields_ = [
+        ("flags", c_uint32),
+        ("default_values", c_uint8 * GPIOHANDLES_MAX),
+        ("padding", c_uint32 * 4),
+    ]
+
+
+GPIOHANDLE_SET_CONFIG_IOCTL = _IOWR(0xB4, 0x0A, gpiohandle_config)
+
+
 class gpiohandle_data(Structure):
     _fields_ = [
         ("values", c_uint8 * GPIOHANDLES_MAX),

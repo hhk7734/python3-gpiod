@@ -630,6 +630,55 @@ class line:
                 errno, strerror(errno), "error setting GPIO line value"
             )
 
+    def set_config(self, direction: int, flags: int, value: int = 0):
+        """
+        @brief Set configuration of this line.
+
+        @param direction: New direction.
+        @param flags:     Replacement flags.
+        @param value:     New value (0 or 1) - only matters for OUTPUT
+                          direction.
+        """
+        self._throw_if_null()
+
+        bulk = line_bulk([self])
+
+        bulk.set_config(direction, flags, [value])
+
+    def set_flags(self, flags: int):
+        """
+        @brief Set configuration flags of this line.
+
+        @param flags: Replacement flags.
+        """
+        self._throw_if_null()
+
+        bulk = line_bulk([self])
+
+        bulk.set_flags(flags)
+
+    def set_direction_input(self):
+        """
+        @brief Change the direction this line to input.
+        """
+        self._throw_if_null()
+
+        bulk = line_bulk([self])
+
+        bulk.set_direction_input()
+
+    def set_direction_output(self, value: int = 0):
+        """
+        @brief Change the direction this lines to output.
+
+        @param value: New value (0 or 1).
+        """
+        self._throw_if_null()
+
+        bulk = line_bulk([self])
+
+        bulk.set_direction_output([value])
+
     def event_wait(self, timeout: timedelta) -> bool:
         """
         @brief Wait for an event on this line.
@@ -800,6 +849,10 @@ class line:
     BIAS_DISABLE = 2
     BIAS_PULL_UP = 3
     BIAS_PULL_DOWN = 4
+
+    def _throw_if_null(self) -> None:
+        if self._m_line is None:
+            raise RuntimeError("object not holding a GPIO line handle")
 
     def _throw_if_null_and_get_m_line(self) -> libgpiod.gpiod_line:
         if self._m_line is None:
@@ -1028,6 +1081,118 @@ class line_bulk:
 
         for i in range(self.size):
             self._m_bulk[i].set_value(values[i])
+
+    def set_config(
+        self, direction: int, flags: int, values: Optional[List[int]] = None
+    ):
+        """
+        @brief Set configuration of all lines held by this object.
+
+        @param direction: New direction.
+        @param flags:     Replacement flags.
+
+        @param List of values to set. Must be the same size as the number of
+               lines held by this line_bulk.
+               Only relevant for output direction requests.
+        """
+        self._throw_if_empty()
+
+        if values is not None and self.size != len(values):
+            raise ValueError(
+                "the size of values array must correspond to "
+                "the number of lines"
+            )
+
+        gflags = 0
+
+        for first, second in reqflag_mapping.items():
+            if first & flags:
+                gflags |= second
+
+        bulk = libgpiod.gpiod_line_bulk()
+
+        self._to_line_bulk(bulk)
+
+        rv = libgpiod.gpiod_line_set_config_bulk(
+            bulk, direction, gflags, values
+        )
+        if rv < 0:
+            errno = get_errno()
+            raise OSError(
+                errno, strerror(errno), "error setting GPIO line config"
+            )
+
+    def set_flags(self, flags: int):
+        """
+        @brief Set configuration flags of all lines held by this object.
+
+        @param flags: Replacement flags.
+        """
+        self._throw_if_empty()
+
+        bulk = libgpiod.gpiod_line_bulk()
+
+        self._to_line_bulk(bulk)
+
+        gflags = 0
+
+        for first, second in reqflag_mapping.items():
+            if first & flags:
+                gflags |= second
+
+        rv = libgpiod.gpiod_line_set_flags_bulk(bulk, gflags)
+        if rv < 0:
+            errno = get_errno()
+            raise OSError(
+                errno, strerror(errno), "error setting GPIO line flags"
+            )
+
+    def set_direction_input(self):
+        """
+        @brief Change the direction all lines held by this object to input.
+        """
+        self._throw_if_empty()
+
+        bulk = libgpiod.gpiod_line_bulk()
+
+        self._to_line_bulk(bulk)
+
+        rv = libgpiod.gpiod_line_set_direction_input_bulk(bulk)
+        if rv < 0:
+            errno = get_errno()
+            raise OSError(
+                errno,
+                strerror(errno),
+                "error setting GPIO line direction to input",
+            )
+
+    def set_direction_output(self, values: Optional[List[int]] = None):
+        """
+        @brief Change the direction this lines to output.
+
+        @param values: Vector of values to set. Must be the same size as the
+                       number of lines held by this line_bulk.
+        """
+        self._throw_if_empty()
+
+        if values is not None and self.size != len(values):
+            raise ValueError(
+                "the size of values array must correspond to "
+                "the number of lines"
+            )
+
+        bulk = libgpiod.gpiod_line_bulk()
+
+        self._to_line_bulk(bulk)
+
+        rv = libgpiod.gpiod_line_set_direction_output_bulk(bulk, values)
+        if rv < 0:
+            errno = get_errno()
+            raise OSError(
+                errno,
+                strerror(errno),
+                "error setting GPIO line direction to output",
+            )
 
     def event_wait(self, timeout: timedelta) -> line_bulk:
         """

@@ -98,7 +98,7 @@ def _is_gpiochip_cdev(path: str) -> bool:
     return True
 
 
-def gpiod_chip_open(path: str) -> gpiod_chip:
+def gpiod_chip_open(path: str) -> Optional[gpiod_chip]:
     """
     @brief Open a gpiochip by path.
 
@@ -151,7 +151,7 @@ def gpiod_chip_close(chip: gpiod_chip):
     del chip
 
 
-def gpiod_chip_get_line(chip: gpiod_chip, offset: int) -> gpiod_line:
+def gpiod_chip_get_line(chip: gpiod_chip, offset: int) -> Optional[gpiod_line]:
     """
     @brief Get the handle to the GPIO line at given offset.
 
@@ -928,7 +928,9 @@ def gpiod_line_event_wait(line: gpiod_line, timeout: timedelta) -> int:
 
 
 def gpiod_line_event_wait_bulk(
-    bulk: gpiod_line_bulk, timeout: timedelta, event_bulk: gpiod_line_bulk
+    bulk: gpiod_line_bulk,
+    timeout: timedelta,
+    event_bulk: Optional[gpiod_line_bulk],
 ) -> int:
     """
     @brief Wait for events on a set of lines.
@@ -1061,7 +1063,7 @@ def gpiod_line_event_read_fd(fd: int, event: gpiod_line_event) -> int:
 # helpers.c
 
 
-def gpiod_chip_open_by_name(name: str) -> gpiod_chip:
+def gpiod_chip_open_by_name(name: str) -> Optional[gpiod_chip]:
     """
     @brief Open a gpiochip by name.
 
@@ -1072,7 +1074,7 @@ def gpiod_chip_open_by_name(name: str) -> gpiod_chip:
     return gpiod_chip_open("/dev/" + str(name))
 
 
-def gpiod_chip_open_by_number(num: Union[int, str]) -> gpiod_chip:
+def gpiod_chip_open_by_number(num: Union[int, str]) -> Optional[gpiod_chip]:
     """
     @brief Open a gpiochip by number.
 
@@ -1083,7 +1085,7 @@ def gpiod_chip_open_by_number(num: Union[int, str]) -> gpiod_chip:
     return gpiod_chip_open("/dev/gpiochip" + str(num))
 
 
-def gpiod_chip_open_by_label(label: str) -> gpiod_chip:
+def gpiod_chip_open_by_label(label: str) -> Optional[gpiod_chip]:
     """
     @brief Open a gpiochip by label.
 
@@ -1110,7 +1112,7 @@ def gpiod_chip_open_by_label(label: str) -> gpiod_chip:
     return None
 
 
-def gpiod_chip_open_lookup(descr: Union[int, str]) -> gpiod_chip:
+def gpiod_chip_open_lookup(descr: Union[int, str]) -> Optional[gpiod_chip]:
     """
     @brief Open a gpiochip based on the best guess what the path is.
 
@@ -1139,7 +1141,7 @@ def gpiod_chip_open_lookup(descr: Union[int, str]) -> gpiod_chip:
     return chip
 
 
-def gpiod_chip_find_line(chip: gpiod_chip, name: str) -> gpiod_line:
+def gpiod_chip_find_line(chip: gpiod_chip, name: str) -> Optional[gpiod_line]:
     """
     @brief Find a GPIO line by name among lines associated with given GPIO chip.
 
@@ -1173,7 +1175,7 @@ class gpiod_chip_iter:
         self.chips = []
         self.offset = 0
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[gpiod_chip]:
         """
         gpiod_chip_iter_new()
 

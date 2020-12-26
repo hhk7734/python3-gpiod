@@ -26,12 +26,6 @@ from ctypes import get_errno
 from datetime import timedelta
 from errno import ENOENT
 from os import strerror
-from py_src.gpiod.libgpiod.gpiod_h import (
-    GPIOD_LINE_BIAS_AS_IS,
-    GPIOD_LINE_BIAS_DISABLE,
-    GPIOD_LINE_BIAS_PULL_DOWN,
-    GPIOD_LINE_BIAS_PULL_UP,
-)
 from typing import Iterator, List, Optional, Union
 
 from .. import libgpiod
@@ -412,10 +406,10 @@ reqflag_mapping = {
 }
 
 bias_mapping = {
-    GPIOD_LINE_BIAS_PULL_UP: line.BIAS_PULL_UP,
-    GPIOD_LINE_BIAS_PULL_DOWN: line.BIAS_PULL_DOWN,
-    GPIOD_LINE_BIAS_DISABLE: line.BIAS_DISABLE,
-    GPIOD_LINE_BIAS_AS_IS: line.BIAS_AS_IS,
+    libgpiod.GPIOD_LINE_BIAS_PULL_UP: line.BIAS_PULL_UP,
+    libgpiod.GPIOD_LINE_BIAS_PULL_DOWN: line.BIAS_PULL_DOWN,
+    libgpiod.GPIOD_LINE_BIAS_DISABLE: line.BIAS_DISABLE,
+    libgpiod.GPIOD_LINE_BIAS_AS_IS: line.BIAS_AS_IS,
 }
 
 

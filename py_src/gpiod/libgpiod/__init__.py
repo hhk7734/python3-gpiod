@@ -1050,7 +1050,7 @@ def gpiod_line_event_read_fd(fd: int, event: gpiod_line_event) -> int:
         else GPIOD_LINE_EVENT_FALLING_EDGE
     )
 
-    sec = evdata.timestamp / 1_000_000_000
+    sec = evdata.timestamp // 1_000_000_000
     event.ts = datetime(year=1970, month=1, day=1) + timedelta(
         days=sec // 86400,
         seconds=sec % 86400,

@@ -991,11 +991,11 @@ def gpiod_line_event_read(line: gpiod_line, event: gpiod_line_event) -> int:
 
     @note This function will block if no event was queued for this line.
     """
-    if line.state != _LINE_REQUESTED_EVENTS:
-        set_errno(EPERM)
+    fd = gpiod_line_event_get_fd(line)
+    if fd < 0:
         return -1
 
-    return gpiod_line_event_read_fd(line.fd_handle.fd, event)
+    return gpiod_line_event_read_fd(fd, event)
 
 
 def gpiod_line_event_get_fd(line: gpiod_line) -> int:

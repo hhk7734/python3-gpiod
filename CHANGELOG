@@ -1,3 +1,16 @@
+python3-gpiod (1.5.0) unstable; urgency=medium
+
+  * libgpiodcxx: fix request flags
+  * libgpiodcxx: provide line::update()
+  * libgpiod: deprecate gpiod_needs_update()
+  * libgpiodcxx: remove property decorator from members beginning with a verb
+  * libgpiodcxx: add support for bias flags
+  * libgpiodcxx: add support for SET_CONFIG
+  * libgpiod: fix issue where microseconds is calculated twice
+  * libgpiod: use gpiod_line_event_get_fd() in gpiod_line_event_read()
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Tue, 13 Apr 2021 14:45:13 +0900
+
 python3-gpiod (1.4.0) unstable; urgency=medium
 
   * libgpiod: correct type check

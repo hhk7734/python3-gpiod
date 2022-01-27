@@ -1,3 +1,9 @@
+python3-gpiod (1.5.1) unstable; urgency=medium
+
+  * add py.typed
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Thu, 27 Jan 2022 20:19:00 +0900
+
 python3-gpiod (1.5.0) unstable; urgency=medium
 
   * libgpiodcxx: fix request flags

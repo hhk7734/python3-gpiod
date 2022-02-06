@@ -22,15 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from os import path
+from pathlib import Path
+
 from setuptools import setup
 
-BASE_DIR = path.dirname(path.abspath(__file__))
-CHANGELOG_PATH = path.join(BASE_DIR, "CHANGELOG")
+BASE_DIR = Path(__file__).parent
+CHANGELOG_PATH = BASE_DIR / "CHANGELOG"
 
-with open(CHANGELOG_PATH, "r") as f:
-    version = f.readline()
-    version = version.split()
-    version = version[1][1:-1]
+with CHANGELOG_PATH.open(encoding="utf-8") as fd:
+    version = fd.readline().strip().split()[1]
 
 setup(version=version)

@@ -24,7 +24,7 @@ SOFTWARE.
 from __future__ import annotations
 
 from os import close as os_close
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 
 def GPIOD_BIT(nr: int) -> int:
@@ -40,13 +40,13 @@ GPIOD_LINE_BULK_MAX_LINES = 64
 
 class gpiod_line_bulk:
     # pylint: disable=function-redefined
-    def __init__(self):
+    def __init__(self) -> None:
         # gpiod_line_bulk_init(bulk)
         self._lines = []
 
     # pylint: disable=missing-function-docstring
 
-    def add(self, line: gpiod_line):
+    def add(self, line: gpiod_line) -> None:
         # gpiod_line_bulk_add(bulk, line)
         if self.num_lines < GPIOD_LINE_BULK_MAX_LINES:
             self._lines.append(line)
@@ -60,7 +60,7 @@ class gpiod_line_bulk:
         # gpiod_line_bulk_get_line(bulk, offset)
         return self._lines[offset]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[gpiod_line]:
         return iter(self._lines)
 
 
@@ -91,7 +91,7 @@ GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP = GPIOD_BIT(5)
 
 
 class gpiod_line_request_config:
-    def __init__(self):
+    def __init__(self) -> None:
         self.consumer = ""
         self.request_type = 0
         self.flags = 0
@@ -102,7 +102,7 @@ GPIOD_LINE_EVENT_FALLING_EDGE = 2
 
 
 class gpiod_line_event:
-    def __init__(self):
+    def __init__(self) -> None:
         self.ts = None
         self.event_type = 0
 
@@ -115,17 +115,17 @@ class gpiod_line_event:
 
 
 class line_fd_handle:
-    def __init__(self, fd):
+    def __init__(self, fd) -> None:
         self.fd = fd
 
-    def __del__(self):
+    def __del__(self) -> None:
         # line_fd_decref(line)
         os_close(self.fd)
 
 
 class gpiod_line:
     # pylint: disable=function-redefined, too-many-instance-attributes
-    def __init__(self, chip: gpiod_chip):
+    def __init__(self, chip: gpiod_chip) -> None:
         self.offset = 0
         self.direction = 0
         self.active_state = 0
@@ -147,7 +147,7 @@ class gpiod_line:
 
 class gpiod_chip:
     # pylint: disable=function-redefined
-    def __init__(self, num_lines: int, fd: int, name: str, label: str):
+    def __init__(self, num_lines: int, fd: int, name: str, label: str) -> None:
         self.lines: List[gpiod_line] = [None] * num_lines
         self._num_lines = num_lines
         self._fd = fd

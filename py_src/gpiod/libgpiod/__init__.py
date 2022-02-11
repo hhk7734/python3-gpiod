@@ -134,7 +134,7 @@ def gpiod_chip_open(path: str) -> Optional[gpiod_chip]:
     )
 
 
-def gpiod_chip_close(chip: gpiod_chip):
+def gpiod_chip_close(chip: gpiod_chip) -> None:
     """
     @brief Close a GPIO chip handle and release all allocated resources.
 
@@ -547,7 +547,7 @@ def gpiod_line_request_bulk(
     return -1
 
 
-def gpiod_line_release(line: gpiod_line):
+def gpiod_line_release(line: gpiod_line) -> None:
     """
     @brief Release a previously reserved line.
 
@@ -560,7 +560,7 @@ def gpiod_line_release(line: gpiod_line):
     gpiod_line_release_bulk(bulk)
 
 
-def gpiod_line_release_bulk(bulk: gpiod_line_bulk):
+def gpiod_line_release_bulk(bulk: gpiod_line_bulk) -> None:
     """
     @brief Release a set of previously reserved lines.
 
@@ -1171,7 +1171,7 @@ def gpiod_chip_find_line(chip: gpiod_chip, name: str) -> Optional[gpiod_line]:
 
 
 class gpiod_chip_iter:
-    def __init__(self):
+    def __init__(self) -> None:
         self.chips = []
         self.offset = 0
 
@@ -1242,7 +1242,7 @@ class gpiod_chip_iter:
 
 class gpiod_line_iter:
     # pylint: disable=too-few-public-methods
-    def __init__(self, chip: gpiod_chip):
+    def __init__(self, chip: gpiod_chip) -> None:
         self.chip = chip
 
         self.lines = []

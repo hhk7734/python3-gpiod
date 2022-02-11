@@ -28,7 +28,7 @@ from ctypes import get_errno
 from datetime import timedelta
 from errno import ENOENT
 from os import strerror
-from typing import Iterator, List, Optional, Union
+from typing import Iterator, List, Optional, TypeVar, Union
 
 from .. import libgpiod
 
@@ -55,14 +55,16 @@ open_funcs = {
 }
 
 
-def chip_deleter(chip_struct: libgpiod.gpiod_chip):
+def chip_deleter(chip_struct: libgpiod.gpiod_chip) -> None:
     # pylint: disable=missing-function-docstring
     libgpiod.gpiod_chip_close(chip_struct)
 
 
 class shared_chip:
     # pylint: disable=missing-function-docstring
-    def __init__(self, chip_struct: Optional[libgpiod.gpiod_chip] = None):
+    def __init__(
+        self, chip_struct: Optional[libgpiod.gpiod_chip] = None
+    ) -> None:
         self._chip_struct = chip_struct
 
     def get(self) -> Optional[libgpiod.gpiod_chip]:
@@ -104,7 +106,7 @@ class chip:
         if device is not None:
             self.open(device, how)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         @brief Destructor
 
@@ -142,7 +144,7 @@ class chip:
 
         self._m_chip = shared_chip(chip_struct)
 
-    def reset(self):
+    def reset(self) -> None:
         """
         @brief Reset the internal smart pointer owned by this object.
 
@@ -360,7 +362,7 @@ class line_request:
     FLAG_BIAS_PULL_DOWN = libgpiod.GPIOD_BIT(4)
     FLAG_BIAS_PULL_UP = libgpiod.GPIOD_BIT(5)
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.consumer = ""
         self.request_type = 0
         self.flags = 0
@@ -410,7 +412,7 @@ class line:
         self._m_line = line_struct
         self._m_chip = owner
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         @brief Destructor
 
@@ -541,7 +543,7 @@ class line:
             self._throw_if_null_and_get_m_line()
         )
 
-    def request(self, config: line_request, default_val: int = 0):
+    def request(self, config: line_request, default_val: int = 0) -> None:
         """
         @brief Request this line.
 
@@ -572,7 +574,7 @@ class line:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error requesting GPIO line")
 
-    def release(self):
+    def release(self) -> None:
         """
         @brief Release the line if it was previously requested.
 
@@ -612,7 +614,7 @@ class line:
 
         return rv
 
-    def set_value(self, val: int):
+    def set_value(self, val: int) -> None:
         """
         @brief Set the value of this line.
 
@@ -630,7 +632,7 @@ class line:
                 errno, strerror(errno), "error setting GPIO line value"
             )
 
-    def set_config(self, direction: int, flags: int, value: int = 0):
+    def set_config(self, direction: int, flags: int, value: int = 0) -> None:
         """
         @brief Set configuration of this line.
 
@@ -645,7 +647,7 @@ class line:
 
         bulk.set_config(direction, flags, [value])
 
-    def set_flags(self, flags: int):
+    def set_flags(self, flags: int) -> None:
         """
         @brief Set configuration flags of this line.
 
@@ -657,7 +659,7 @@ class line:
 
         bulk.set_flags(flags)
 
-    def set_direction_input(self):
+    def set_direction_input(self) -> None:
         """
         @brief Change the direction this line to input.
         """
@@ -667,7 +669,7 @@ class line:
 
         bulk.set_direction_input()
 
-    def set_direction_output(self, value: int = 0):
+    def set_direction_output(self, value: int = 0) -> None:
         """
         @brief Change the direction this lines to output.
 
@@ -787,7 +789,7 @@ class line:
                 errno, strerror(errno), "unable to update the line info"
             )
 
-    def reset(self):
+    def reset(self) -> None:
         """
         @brief Reset the state of this object.
 
@@ -866,7 +868,7 @@ class line_event:
     RISING_EDGE = 1
     FALLING_EDGE = 2
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.timestamp = None
         self.event_type = 0
         self.source = line()
@@ -986,7 +988,7 @@ class line_bulk:
         """
         return len(self._m_bulk) == 0
 
-    def clear(self):
+    def clear(self) -> None:
         """
         @brief Remove all lines from this object.
 
@@ -1084,7 +1086,7 @@ class line_bulk:
 
     def set_config(
         self, direction: int, flags: int, values: Optional[List[int]] = None
-    ):
+    ) -> None:
         """
         @brief Set configuration of all lines held by this object.
 
@@ -1122,7 +1124,7 @@ class line_bulk:
                 errno, strerror(errno), "error setting GPIO line config"
             )
 
-    def set_flags(self, flags: int):
+    def set_flags(self, flags: int) -> None:
         """
         @brief Set configuration flags of all lines held by this object.
 
@@ -1147,7 +1149,7 @@ class line_bulk:
                 errno, strerror(errno), "error setting GPIO line flags"
             )
 
-    def set_direction_input(self):
+    def set_direction_input(self) -> None:
         """
         @brief Change the direction all lines held by this object to input.
         """
@@ -1166,7 +1168,7 @@ class line_bulk:
                 "error setting GPIO line direction to input",
             )
 
-    def set_direction_output(self, values: Optional[List[int]] = None):
+    def set_direction_output(self, values: Optional[List[int]] = None) -> None:
         """
         @brief Change the direction this lines to output.
 
@@ -1254,7 +1256,7 @@ class line_bulk:
         """
         return self._m_bulk.__iter__()
 
-    def _throw_if_empty(self):
+    def _throw_if_empty(self) -> None:
         if self.empty:
             raise RuntimeError("line_bulk not holding any GPIO lines")
 
@@ -1262,6 +1264,9 @@ class line_bulk:
         for it in self._m_bulk:
             # pylint: disable=protected-access
             bulk.add(it._m_line)
+
+
+CI = TypeVar("CI", bound="chip_iter")
 
 
 class chip_iter:
@@ -1273,10 +1278,10 @@ class chip_iter:
             print(c.name)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._iter = None
 
-    def __iter__(self):
+    def __iter__(self: CI) -> CI:
         self._iter = libgpiod.gpiod_chip_iter().__iter__()
         if self._iter is None:
             errno = get_errno()
@@ -1289,6 +1294,9 @@ class chip_iter:
     def __next__(self) -> chip:
         _next = self._iter.next_noclose()
         return chip(chip_shared=shared_chip(_next))
+
+
+LI = TypeVar("LI", bound="line_iter")
 
 
 class line_iter:
@@ -1307,7 +1315,7 @@ class line_iter:
 
         self._iter = None
 
-    def __iter__(self) -> Iterator[libgpiod.gpiod_line]:
+    def __iter__(self: LI) -> LI:
         self._iter = iter(libgpiod.gpiod_line_iter(self._chip._m_chip.get()))
         if self._iter is None:
             errno = get_errno()

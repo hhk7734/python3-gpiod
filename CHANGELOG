@@ -1,3 +1,8 @@
+## 1.5.3
+
+- libgpiod: update typing for return values #27
+- libgpiod: update typing for return values #27
+
 ## 1.5.2
 
 - MANIFEST.in: add `py.typed` for compatibility with sdist and bdist #24

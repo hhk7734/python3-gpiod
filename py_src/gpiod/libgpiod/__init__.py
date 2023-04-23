@@ -117,7 +117,7 @@ def gpiod_chip_open(path: str) -> Optional[gpiod_chip]:
         os_close(fd)
         return None
 
-    if info.label[0] == "\0":
+    if not info.label or info.label[0] == "\0":
         label = "unknown"
     else:
         label = info.label.decode()

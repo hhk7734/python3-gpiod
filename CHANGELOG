@@ -1,3 +1,9 @@
+## 1.5.4
+
+- chore: change max-line-length and run black and isort by @hhk7734 in #36
+- Fixed issue when gpio chip has no label by @yacinbm in #35
+- Also build a py3-none-any wheel by @rmelick-muon in #33
+
 ## 1.5.3
 
 - libgpiod: update typing for return values #27

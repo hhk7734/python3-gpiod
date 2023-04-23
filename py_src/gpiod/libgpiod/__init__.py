@@ -64,7 +64,7 @@ def _is_gpiochip_cdev(path: str) -> bool:
 
     # Do we have a corresponding sysfs attribute?
     name = basename(path)
-    sysfsp = "/sys/bus/gpio/devices/{}/dev".format(name)
+    sysfsp = f"/sys/bus/gpio/devices/{name}/dev"
     if not access(sysfsp, R_OK):
         # This is a character device but not the one we're after.
         # Before the introduction of this function, we'd fail with
@@ -76,10 +76,10 @@ def _is_gpiochip_cdev(path: str) -> bool:
 
     # Make sure the major and minor numbers of the character device
     # correspond to the ones in the dev attribute in sysfs.
-    devstr = "{}:{}".format(major(statbuf.st_rdev), minor(statbuf.st_rdev))
+    devstr = f"{major(statbuf.st_rdev)}:{minor(statbuf.st_rdev)}"
 
     try:
-        with open(sysfsp, "r") as fd:
+        with open(sysfsp, "r", encoding="utf-8") as fd:
             sysfsdev = fd.read(len(devstr))
     except FileNotFoundError:
         return False
@@ -307,10 +307,10 @@ def _line_bulk_all_free(bulk: gpiod_line_bulk) -> bool:
 
 
 def _line_request_direction_is_valid(direction: int) -> bool:
-    if (
-        direction == GPIOD_LINE_REQUEST_DIRECTION_AS_IS
-        or direction == GPIOD_LINE_REQUEST_DIRECTION_INPUT
-        or direction == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT
+    if direction in (
+        GPIOD_LINE_REQUEST_DIRECTION_AS_IS,
+        GPIOD_LINE_REQUEST_DIRECTION_INPUT,
+        GPIOD_LINE_REQUEST_DIRECTION_OUTPUT,
     ):
         return True
 
@@ -563,7 +563,7 @@ def gpiod_line_is_requested(line: gpiod_line) -> bool:
 
     @return True if given line was requested, false otherwise.
     """
-    return line.state == _LINE_REQUESTED_VALUES or line.state == _LINE_REQUESTED_EVENTS
+    return line.state in (_LINE_REQUESTED_VALUES, _LINE_REQUESTED_EVENTS)
 
 
 def gpiod_line_is_free(line: gpiod_line) -> bool:

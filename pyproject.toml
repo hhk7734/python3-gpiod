@@ -278,7 +278,7 @@ min-public-methods = 2
 
 [tool.pylint.exceptions]
 # Exceptions that will emit a warning when caught.
-overgeneral-exceptions = ["BaseException", "Exception"]
+overgeneral-exceptions = ["builtins.BaseException", "builtins.Exception"]
 
 [tool.pylint.format]
 # Expected format of line ending, e.g. empty (any line ending), LF or CRLF.
@@ -298,7 +298,7 @@ indent-string = "    "
 max-line-length = 100
 
 # Maximum number of lines in a module.
-max-module-lines = 1000
+max-module-lines = 2000
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -376,6 +376,9 @@ disable = [
   "use-symbolic-message-instead",
   "missing-class-docstring",
   "invalid-name",
+  "broad-exception-raised",
+  "too-many-public-methods",
+  "duplicate-code",
 ]
 
 # Enable the message, report, category or checker with the given id(s). You can

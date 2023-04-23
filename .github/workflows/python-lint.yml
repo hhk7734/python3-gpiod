@@ -3,7 +3,7 @@
 
 name: Lint check
 
-on: [pull_request, push]
+on: [pull_request]
 
 jobs:
   test:

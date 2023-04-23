@@ -36,7 +36,7 @@ config = line_request()
 config.request_type = BUTTON_EDGE
 
 for i in range(buttons.size):
-    config.consumer = "Button {}".format(i)
+    config.consumer = f"Button {i}"
     buttons[i].request(config)
 
 

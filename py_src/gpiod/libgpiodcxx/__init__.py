@@ -135,7 +135,7 @@ class chip:
             raise OSError(
                 errno,
                 strerror(errno),
-                "cannot open GPIO device {}".format(device),
+                f"cannot open GPIO device {device}",
             )
 
         self._m_chip = shared_chip(chip_struct)
@@ -981,9 +981,7 @@ class line_bulk:
             default_vals = [0] * self.size
 
         if self.size != len(default_vals):
-            raise ValueError(
-                "the number of default values must correspond " "to the number of lines"
-            )
+            raise ValueError("the number of default values must correspond to the number of lines")
 
         try:
             for i in range(self.size):
@@ -1035,7 +1033,7 @@ class line_bulk:
         self._throw_if_empty()
 
         if self.size != len(values):
-            raise ValueError("the size of values array must correspond to " "the number of lines")
+            raise ValueError("the size of values array must correspond to the number of lines")
 
         for i in range(self.size):
             self._m_bulk[i].set_value(values[i])
@@ -1054,7 +1052,7 @@ class line_bulk:
         self._throw_if_empty()
 
         if values is not None and self.size != len(values):
-            raise ValueError("the size of values array must correspond to " "the number of lines")
+            raise ValueError("the size of values array must correspond to the number of lines")
 
         gflags = 0
 
@@ -1123,7 +1121,7 @@ class line_bulk:
         self._throw_if_empty()
 
         if values is not None and self.size != len(values):
-            raise ValueError("the size of values array must correspond to " "the number of lines")
+            raise ValueError("the size of values array must correspond to the number of lines")
 
         bulk = libgpiod.gpiod_line_bulk()
 

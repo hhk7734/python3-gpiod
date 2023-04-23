@@ -62,9 +62,7 @@ def chip_deleter(chip_struct: libgpiod.gpiod_chip) -> None:
 
 class shared_chip:
     # pylint: disable=missing-function-docstring
-    def __init__(
-        self, chip_struct: Optional[libgpiod.gpiod_chip] = None
-    ) -> None:
+    def __init__(self, chip_struct: Optional[libgpiod.gpiod_chip] = None) -> None:
         self._chip_struct = chip_struct
 
     def get(self) -> Optional[libgpiod.gpiod_chip]:
@@ -114,9 +112,7 @@ class chip:
             del chip
         """
 
-    def open(
-        self, device: Union[int, str], how: int = _CHIP_OPEN_LOOKUP
-    ) -> None:
+    def open(self, device: Union[int, str], how: int = _CHIP_OPEN_LOOKUP) -> None:
         """
         @brief Open a GPIO chip.
 
@@ -204,14 +200,10 @@ class chip:
         if offset >= self.num_lines or offset < 0:
             raise IndexError("line offset out of range")
 
-        line_struct = libgpiod.gpiod_chip_get_line(
-            self._throw_if_noref_and_get_m_chip(), offset
-        )
+        line_struct = libgpiod.gpiod_chip_get_line(self._throw_if_noref_and_get_m_chip(), offset)
         if line_struct is None:
             errno = get_errno()
-            raise OSError(
-                errno, strerror(errno), "error getting GPIO line from chip"
-            )
+            raise OSError(errno, strerror(errno), "error getting GPIO line from chip")
 
         return line(line_struct, copy(self))
 
@@ -226,14 +218,10 @@ class chip:
         Usage:
             l = chip.find_line("PIN_0")
         """
-        line_struct = libgpiod.gpiod_chip_find_line(
-            self._throw_if_noref_and_get_m_chip(), name
-        )
+        line_struct = libgpiod.gpiod_chip_find_line(self._throw_if_noref_and_get_m_chip(), name)
         errno = get_errno()
         if line_struct is None and errno != ENOENT:
-            raise OSError(
-                errno, strerror(errno), "error looking up GPIO line by name"
-            )
+            raise OSError(errno, strerror(errno), "error looking up GPIO line by name")
 
         return line(line_struct, copy(self)) if bool(line_struct) else line()
 
@@ -469,8 +457,7 @@ class line:
         """
         return (
             self.DIRECTION_INPUT
-            if self._throw_if_null_and_get_m_line().direction
-            == libgpiod.GPIOD_LINE_DIRECTION_INPUT
+            if self._throw_if_null_and_get_m_line().direction == libgpiod.GPIOD_LINE_DIRECTION_INPUT
             else self.DIRECTION_OUTPUT
         )
 
@@ -501,9 +488,7 @@ class line:
         Usage:
             print(line.bias == line.BIAS_PULL_UP)
         """
-        return bias_mapping[
-            libgpiod.gpiod_line_bias(self._throw_if_null_and_get_m_line())
-        ]
+        return bias_mapping[libgpiod.gpiod_line_bias(self._throw_if_null_and_get_m_line())]
 
     def is_used(self) -> bool:
         """
@@ -526,9 +511,7 @@ class line:
         Usage:
             print(line.is_open_drain())
         """
-        return libgpiod.gpiod_line_is_open_drain(
-            self._throw_if_null_and_get_m_line()
-        )
+        return libgpiod.gpiod_line_is_open_drain(self._throw_if_null_and_get_m_line())
 
     def is_open_source(self) -> bool:
         """
@@ -539,9 +522,7 @@ class line:
         Usage:
             print(line.is_open_source())
         """
-        return libgpiod.gpiod_line_is_open_source(
-            self._throw_if_null_and_get_m_line()
-        )
+        return libgpiod.gpiod_line_is_open_source(self._throw_if_null_and_get_m_line())
 
     def request(self, config: line_request, default_val: int = 0) -> None:
         """
@@ -592,9 +573,7 @@ class line:
         Usage:
             print(line.is_requested())
         """
-        return libgpiod.gpiod_line_is_requested(
-            self._throw_if_null_and_get_m_line()
-        )
+        return libgpiod.gpiod_line_is_requested(self._throw_if_null_and_get_m_line())
 
     def get_value(self) -> int:
         """
@@ -608,9 +587,7 @@ class line:
         rv = libgpiod.gpiod_line_get_value(self._throw_if_null_and_get_m_line())
         if rv == -1:
             errno = get_errno()
-            raise OSError(
-                errno, strerror(errno), "error reading GPIO line value"
-            )
+            raise OSError(errno, strerror(errno), "error reading GPIO line value")
 
         return rv
 
@@ -623,14 +600,10 @@ class line:
         Usage:
             line.set_value(1)
         """
-        rv = libgpiod.gpiod_line_set_value(
-            self._throw_if_null_and_get_m_line(), val
-        )
+        rv = libgpiod.gpiod_line_set_value(self._throw_if_null_and_get_m_line(), val)
         if rv:
             errno = get_errno()
-            raise OSError(
-                errno, strerror(errno), "error setting GPIO line value"
-            )
+            raise OSError(errno, strerror(errno), "error setting GPIO line value")
 
     def set_config(self, direction: int, flags: int, value: int = 0) -> None:
         """
@@ -696,9 +669,7 @@ class line:
             else:
                 print("Timeout")
         """
-        rv = libgpiod.gpiod_line_event_wait(
-            self._throw_if_null_and_get_m_line(), timeout
-        )
+        rv = libgpiod.gpiod_line_event_wait(self._throw_if_null_and_get_m_line(), timeout)
         if rv < 0:
             errno = get_errno()
             raise OSError(errno, strerror(errno), "error polling for events")
@@ -749,9 +720,7 @@ class line:
         Usage:
             fd = line.event_get_fd()
         """
-        ret = libgpiod.gpiod_line_event_get_fd(
-            self._throw_if_null_and_get_m_line()
-        )
+        ret = libgpiod.gpiod_line_event_get_fd(self._throw_if_null_and_get_m_line())
 
         if ret < 0:
             errno = get_errno()
@@ -785,9 +754,7 @@ class line:
 
         if ret < 0:
             errno = get_errno()
-            raise OSError(
-                errno, strerror(errno), "unable to update the line info"
-            )
+            raise OSError(errno, strerror(errno), "unable to update the line info")
 
     def reset(self) -> None:
         """
@@ -917,13 +884,8 @@ class line_bulk:
         if len(self._m_bulk) >= self.MAX_LINES:
             raise IndexError("maximum number of lines reached")
 
-        if (
-            len(self._m_bulk) >= 1
-            and self._m_bulk[0].get_chip() != new_line.get_chip()
-        ):
-            raise ValueError(
-                "line_bulk cannot hold GPIO lines from different chips"
-            )
+        if len(self._m_bulk) >= 1 and self._m_bulk[0].get_chip() != new_line.get_chip():
+            raise ValueError("line_bulk cannot hold GPIO lines from different chips")
 
         self._m_bulk.append(new_line)
 
@@ -997,9 +959,7 @@ class line_bulk:
         """
         self._m_bulk.clear()
 
-    def request(
-        self, config: line_request, default_vals: Optional[List[int]] = None
-    ) -> None:
+    def request(self, config: line_request, default_vals: Optional[List[int]] = None) -> None:
         """
         @brief Request all lines held by this object.
 
@@ -1022,8 +982,7 @@ class line_bulk:
 
         if self.size != len(default_vals):
             raise ValueError(
-                "the number of default values must correspond "
-                "to the number of lines"
+                "the number of default values must correspond " "to the number of lines"
             )
 
         try:
@@ -1076,17 +1035,12 @@ class line_bulk:
         self._throw_if_empty()
 
         if self.size != len(values):
-            raise ValueError(
-                "the size of values array must correspond to "
-                "the number of lines"
-            )
+            raise ValueError("the size of values array must correspond to " "the number of lines")
 
         for i in range(self.size):
             self._m_bulk[i].set_value(values[i])
 
-    def set_config(
-        self, direction: int, flags: int, values: Optional[List[int]] = None
-    ) -> None:
+    def set_config(self, direction: int, flags: int, values: Optional[List[int]] = None) -> None:
         """
         @brief Set configuration of all lines held by this object.
 
@@ -1100,10 +1054,7 @@ class line_bulk:
         self._throw_if_empty()
 
         if values is not None and self.size != len(values):
-            raise ValueError(
-                "the size of values array must correspond to "
-                "the number of lines"
-            )
+            raise ValueError("the size of values array must correspond to " "the number of lines")
 
         gflags = 0
 
@@ -1115,14 +1066,10 @@ class line_bulk:
 
         self._to_line_bulk(bulk)
 
-        rv = libgpiod.gpiod_line_set_config_bulk(
-            bulk, direction, gflags, values
-        )
+        rv = libgpiod.gpiod_line_set_config_bulk(bulk, direction, gflags, values)
         if rv < 0:
             errno = get_errno()
-            raise OSError(
-                errno, strerror(errno), "error setting GPIO line config"
-            )
+            raise OSError(errno, strerror(errno), "error setting GPIO line config")
 
     def set_flags(self, flags: int) -> None:
         """
@@ -1145,9 +1092,7 @@ class line_bulk:
         rv = libgpiod.gpiod_line_set_flags_bulk(bulk, gflags)
         if rv < 0:
             errno = get_errno()
-            raise OSError(
-                errno, strerror(errno), "error setting GPIO line flags"
-            )
+            raise OSError(errno, strerror(errno), "error setting GPIO line flags")
 
     def set_direction_input(self) -> None:
         """
@@ -1178,10 +1123,7 @@ class line_bulk:
         self._throw_if_empty()
 
         if values is not None and self.size != len(values):
-            raise ValueError(
-                "the size of values array must correspond to "
-                "the number of lines"
-            )
+            raise ValueError("the size of values array must correspond to " "the number of lines")
 
         bulk = libgpiod.gpiod_line_bulk()
 
@@ -1285,9 +1227,7 @@ class chip_iter:
         self._iter = libgpiod.gpiod_chip_iter().__iter__()
         if self._iter is None:
             errno = get_errno()
-            raise OSError(
-                errno, strerror(errno), "error creating GPIO chip iterator"
-            )
+            raise OSError(errno, strerror(errno), "error creating GPIO chip iterator")
 
         return self
 
@@ -1319,9 +1259,7 @@ class line_iter:
         self._iter = iter(libgpiod.gpiod_line_iter(self._chip._m_chip.get()))
         if self._iter is None:
             errno = get_errno()
-            raise OSError(
-                errno, strerror(errno), "error creating GPIO line iterator"
-            )
+            raise OSError(errno, strerror(errno), "error creating GPIO line iterator")
 
         return self
 

@@ -1,7 +1,8 @@
 # pylint: disable=missing-docstring
 import sys
 from datetime import timedelta
-from .. import chip, line_request, line_event
+
+from .. import chip, line_event, line_request
 
 try:
     if len(sys.argv) > 2:

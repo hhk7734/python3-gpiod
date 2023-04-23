@@ -21,31 +21,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+import select
 from ctypes import memmove, memset, pointer, set_errno, sizeof
 from datetime import datetime, timedelta
 from errno import EBUSY, EINVAL, EIO, ENODEV, ENOENT, ENOTTY, EPERM
 from fcntl import ioctl
-from os import (
-    access,
-    close as os_close,
-    lstat,
-    major,
-    minor,
-    open as os_open,
-    O_CLOEXEC,
-    O_RDWR,
-    read as os_read,
-    R_OK,
-    scandir,
-)
+from os import O_CLOEXEC, O_RDWR, R_OK, access
+from os import close as os_close
+from os import lstat, major, minor
+from os import open as os_open
+from os import read as os_read
+from os import scandir
 from os.path import basename
-import select
 from select import POLLIN, POLLNVAL, POLLPRI
 from stat import S_ISCHR
 from typing import Iterator, List, Optional, Union
 
-from .gpiod_h import *
 from ..kernel import *
+from .gpiod_h import *
 
 # core.c
 
@@ -129,9 +122,7 @@ def gpiod_chip_open(path: str) -> Optional[gpiod_chip]:
     else:
         label = info.label.decode()
 
-    return gpiod_chip(
-        num_lines=info.lines, fd=fd, name=info.name.decode(), label=label
-    )
+    return gpiod_chip(num_lines=info.lines, fd=fd, name=info.name.decode(), label=label)
 
 
 def gpiod_chip_close(chip: gpiod_chip) -> None:
@@ -361,11 +352,7 @@ def _line_request_values(
     default_vals: List[int],
 ) -> int:
     if config.request_type != GPIOD_LINE_REQUEST_DIRECTION_OUTPUT and (
-        config.flags
-        & (
-            GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN
-            | GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE
-        )
+        config.flags & (GPIOD_LINE_REQUEST_FLAG_OPEN_DRAIN | GPIOD_LINE_REQUEST_FLAG_OPEN_SOURCE)
     ):
         set_errno(EINVAL)
         return -1
@@ -389,10 +376,7 @@ def _line_request_values(
 
     for i in range(bulk.num_lines):
         req.lineoffsets[i] = bulk[i].offset
-        if (
-            config.request_type == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT
-            and default_vals
-        ):
+        if config.request_type == GPIOD_LINE_REQUEST_DIRECTION_OUTPUT and default_vals:
             req.default_values[i] = 1 if default_vals[i] else 0
 
     if config.consumer:
@@ -423,9 +407,7 @@ def _line_request_values(
     return 0
 
 
-def _line_request_event_single(
-    line: gpiod_line, config: gpiod_line_request_config
-) -> int:
+def _line_request_event_single(line: gpiod_line, config: gpiod_line_request_config) -> int:
     # pylint: disable=no-member
     req = gpioevent_request()
     if config.consumer:
@@ -461,9 +443,7 @@ def _line_request_event_single(
     return 0
 
 
-def _line_request_events(
-    bulk: gpiod_line_bulk, config: gpiod_line_request_config
-) -> int:
+def _line_request_events(bulk: gpiod_line_bulk, config: gpiod_line_request_config) -> int:
     for i in range(bulk.num_lines):
         status = _line_request_event_single(bulk[i], config)
         if status < 0:
@@ -583,10 +563,7 @@ def gpiod_line_is_requested(line: gpiod_line) -> bool:
 
     @return True if given line was requested, false otherwise.
     """
-    return (
-        line.state == _LINE_REQUESTED_VALUES
-        or line.state == _LINE_REQUESTED_EVENTS
-    )
+    return line.state == _LINE_REQUESTED_VALUES or line.state == _LINE_REQUESTED_EVENTS
 
 
 def gpiod_line_is_free(line: gpiod_line) -> bool:
@@ -670,9 +647,7 @@ def gpiod_line_set_value(line: gpiod_line, value: int) -> int:
     return gpiod_line_set_value_bulk(bulk, [value])
 
 
-def gpiod_line_set_value_bulk(
-    bulk: gpiod_line_bulk, values: Optional[List[int]] = None
-) -> int:
+def gpiod_line_set_value_bulk(bulk: gpiod_line_bulk, values: Optional[List[int]] = None) -> int:
     """
     @brief Set the values of a set of GPIO lines.
 
@@ -708,9 +683,7 @@ def gpiod_line_set_value_bulk(
     return 0
 
 
-def gpiod_line_set_config(
-    line: gpiod_line, direction: int, flags: int, value: int
-) -> int:
+def gpiod_line_set_config(line: gpiod_line, direction: int, flags: int, value: int) -> int:
     """
     @brief Update the configuration of a single GPIO line.
 
@@ -848,9 +821,7 @@ def gpiod_line_set_direction_input(line: gpiod_line) -> int:
     @return 0 is the operation succeeds. In case of an error this routine
             returns -1 and sets the last error number.
     """
-    return gpiod_line_set_config(
-        line, GPIOD_LINE_REQUEST_DIRECTION_INPUT, line.req_flags, 0
-    )
+    return gpiod_line_set_config(line, GPIOD_LINE_REQUEST_DIRECTION_INPUT, line.req_flags, 0)
 
 
 def gpiod_line_set_direction_input_bulk(bulk: gpiod_line_bulk) -> int:
@@ -882,14 +853,10 @@ def gpiod_line_set_direction_output(line: gpiod_line, value: int) -> int:
     @return 0 is the operation succeeds. In case of an error this routine
             returns -1 and sets the last error number.
     """
-    return gpiod_line_set_config(
-        line, GPIOD_LINE_REQUEST_DIRECTION_OUTPUT, line.req_flags, value
-    )
+    return gpiod_line_set_config(line, GPIOD_LINE_REQUEST_DIRECTION_OUTPUT, line.req_flags, value)
 
 
-def gpiod_line_set_direction_output_bulk(
-    bulk: gpiod_line_bulk, values: Optional[List[int]]
-) -> int:
+def gpiod_line_set_direction_output_bulk(bulk: gpiod_line_bulk, values: Optional[List[int]]) -> int:
     """
     @brief Set the direction of a set of GPIO lines to output.
 
@@ -954,9 +921,7 @@ def gpiod_line_event_wait_bulk(
         fd_to_line[it.fd_handle.fd] = it
 
     timeout_ms = (
-        (timeout.days * 86_400_000)
-        + (timeout.seconds * 1_000)
-        + (timeout.microseconds / 1000.0)
+        (timeout.days * 86_400_000) + (timeout.seconds * 1_000) + (timeout.microseconds / 1000.0)
     )
 
     revents = poll.poll(timeout_ms)

@@ -1,6 +1,7 @@
 # pylint: disable=missing-docstring
 import sys
 import time
+
 from .. import chip, line, line_request
 
 try:

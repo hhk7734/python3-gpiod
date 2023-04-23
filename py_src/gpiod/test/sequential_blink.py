@@ -1,6 +1,7 @@
 # pylint: disable=missing-docstring
 import sys
 import time
+
 from .. import chip, line_request
 
 try:
@@ -27,7 +28,7 @@ config = line_request()
 config.request_type = line_request.DIRECTION_OUTPUT
 
 for i in range(leds.size):
-    config.consumer = "Blink{}".format(i)
+    config.consumer = f"Blink {i}"
     leds.get(i).request(config)
     print("line: ", leds[i].offset, ", consumer: ", leds[i].consumer)
 

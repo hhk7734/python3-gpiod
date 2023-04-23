@@ -3,16 +3,16 @@
 
 name: Lint check
 
-on: [pull_request, push]
+on: [pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Python 3.7
+      - name: Set up Python 3.9
         uses: actions/setup-python@v1
         with:
-          python-version: 3.7
+          python-version: 3.9
       - name: Checkout Current Repo
         uses: actions/checkout@v2
       - name: Install dependencies
@@ -25,7 +25,7 @@ jobs:
         run: git describe --dirty --always --tags
       - name: Format check with black
         run: |
-          black --check -l 80 .
+          black --check -l 100 .
       - name: Lint with PyLint
         run: |
           pylint py_src/**/*.py

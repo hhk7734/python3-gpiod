@@ -1,7 +1,8 @@
 # pylint: disable=missing-docstring
 import sys
 from datetime import timedelta
-from .. import chip, line_request, line_event
+
+from .. import chip, line_event, line_request
 
 try:
     if len(sys.argv) > 3:
@@ -35,7 +36,7 @@ config = line_request()
 config.request_type = BUTTON_EDGE
 
 for i in range(buttons.size):
-    config.consumer = "Button {}".format(i)
+    config.consumer = f"Button {i}"
     buttons[i].request(config)
 
 

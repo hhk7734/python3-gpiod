@@ -79,7 +79,7 @@ def make_chip_iter() -> chip_iter:
         for c in make_chip_iter():
             print(c.label)
     """
-    return chip_iter().__iter__()
+    return iter(chip_iter())
 
 
 class line_iter(libgpiodcxx.line_iter):

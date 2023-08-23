@@ -33,6 +33,7 @@ from os import open as os_open
 from os import read as os_read
 from os import scandir
 from os.path import basename
+from os.path import realpath
 from select import POLLIN, POLLNVAL, POLLPRI
 from stat import S_ISCHR
 from typing import Iterator, List, Optional, Union
@@ -48,6 +49,9 @@ _LINE_REQUESTED_EVENTS = 2
 
 
 def _is_gpiochip_cdev(path: str) -> bool:
+    # Sanitize the path before performing checks on it
+    path = realpath(path)
+
     try:
         statbuf = lstat(path)
     except FileNotFoundError:
